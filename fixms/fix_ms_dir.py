@@ -6,15 +6,15 @@ ASKAP utility - update the pointing centre of a beam in an MS.
 """
 __author__ = "Emil Lenc"
 import math
-import os
+import logging
 import re
 import sys
 
 import numpy as np
 from casacore.tables import table, tablecopy, tableexists, taql
 
-from arrakis.logger import logger
-from arrakis.utils import beam_from_ms
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 RAD2DEG = 180.0 / math.pi
 DEG2RAD = math.pi / 180.0
