@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixms"
-version = "0.0.0"
+version = "0.0.1"
 description = ""
 authors = ["Alec Thomson (S&A, Kensington WA) <alec.thomson@csiro.au>"]
 readme = "README.md"
