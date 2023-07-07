@@ -225,7 +225,7 @@ def decs_rad(dec_string):
     return r
 
 
-def main(ms):
+def fix_ms_dir(ms):
     # Check that the observation wasn't in pol_fixed mode
     with table("%s/ANTENNA" % (ms), readonly=True, ack=False) as ta:
         ant_mount = ta.getcol("MOUNT", 0, 1)
@@ -366,7 +366,7 @@ def cli():
     args = parser.parse_args()
 
     # Call the main function
-    main(args.ms)
+    fix_ms_dir(args.ms)
 
 
 if __name__ == "__main__":
