@@ -1,4 +1,4 @@
-![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)
+![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest) [![Python package](https://github.com/AlecThomson/FixMS/actions/workflows/main.yml/badge.svg?branch=main&event=release)](https://github.com/AlecThomson/FixMS/actions/workflows/main.yml)
 
 # FixMS
 
