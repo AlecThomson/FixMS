@@ -276,7 +276,10 @@ def main(
 def cli():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Fix the correlations in the MS")
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument("ms", type=str, help="The MS to fix")
     parser.add_argument(
         "--chunksize",
