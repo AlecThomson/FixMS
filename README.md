@@ -10,6 +10,8 @@ ASKAP MSs are produced in a way that breaks compatibility with most other imager
 
 2. `fix_ms_corrs` : ASKAP MeasurementSets, as calibrated by the obervatory, provide correlations in the instrument frame. ASKAP has a unique 'roll' axis which means, in principle, the instrument frame can be at any arbitrary rotation on the sky. This utility applies the appropriate rotation matrix to the visibilities such the 'X' is aligned North-South and 'Y' is aligned East-West (IAU convention). Further, ASKAPsoft defines Stokes I as $I=XX+YY$, whereas most other telescopes use $I=\frac{1}{2}(XX+YY)$ (note this also applies to all other Stokes paramters). This factor is also corrected for here at the same time as the rotation.
 
+Full documentation on [Read The Docs](https://fixms.readthedocs.io/en/latest/).
+
 ## Installation
 
 Obtain and install Python 3 (I recommend [Miniforge](https://github.com/conda-forge/miniforge) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)).
