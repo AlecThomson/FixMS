@@ -1,3 +1,5 @@
+https://readthedocs.org/projects/fixms/badge/?version=latest
+
 # FixMS
 
 ASKAP utilities for updating MeasurementSets for external imagers.
