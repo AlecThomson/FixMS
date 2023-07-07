@@ -4,7 +4,7 @@
 ASKAP utility - update the pointing centre of a beam in an MS.
     - Allows imaging by CASA or wsclean.
 """
-__author__ = "Emil Lenc"
+__author__ = ["Emil Lenc", "Alec Thomson"]
 import logging
 import math
 import re
@@ -355,7 +355,7 @@ def cli():
 
     # Create a new ArgumentParser object
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+        description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
     # Add the options

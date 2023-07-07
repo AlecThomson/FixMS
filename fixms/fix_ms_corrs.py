@@ -8,6 +8,7 @@ This will make them compatible with most imagers (e.g. wsclean, CASA)
 
 The new correlations are placed in a new column called 'CORRECTED_DATA'
 """
+__author__ = ["Alec Thomson"]
 import logging
 from pathlib import Path
 from typing import Iterator
