@@ -1,1 +1,8 @@
--e .[dev]
+isort
+black
+sphinx
+numpydoc
+myst_parser
+autoapi
+sphinx-autoapi
+-e .
