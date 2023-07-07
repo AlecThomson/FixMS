@@ -5,8 +5,8 @@ ASKAP utility - update the pointing centre of a beam in an MS.
     - Allows imaging by CASA or wsclean.
 """
 __author__ = "Emil Lenc"
-import math
 import logging
+import math
 import re
 import sys
 
@@ -19,6 +19,7 @@ logger.setLevel(logging.INFO)
 RAD2DEG = 180.0 / math.pi
 DEG2RAD = math.pi / 180.0
 
+
 def beam_from_ms(ms: str) -> int:
     """Work out which beam is in this MS"""
     t = table(ms, readonly=True, ack=False)
@@ -26,6 +27,7 @@ def beam_from_ms(ms: str) -> int:
     beam = vis_feed[0]
     t.close()
     return beam
+
 
 class Skypos:
     """Defines a class that works with spherical geometry, specifically points
@@ -261,8 +263,9 @@ def main(ms):
 
     # Open up the MS FIELD table so it can be updated.
     # Open up the MS FEED table so we can work out what the offset is for the beam.
-    with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, \
-        table("%s/FEED_OLD" % (ms), readonly=True, ack=False) as tf:
+    with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
+        "%s/FEED_OLD" % (ms), readonly=True, ack=False
+    ) as tf:
         # The offsets are assumed to be the same for all antennas so get a list of all
         # the offsets for one antenna and for the current beam. This should return offsets
         # required for each field.
@@ -299,9 +302,11 @@ def main(ms):
                 offset_index = -1
                 for offset in range(n_offsets):
                     if (
-                        time_data[0] > offset_times[offset] - offset_intervals[offset] / 2.0
+                        time_data[0]
+                        > offset_times[offset] - offset_intervals[offset] / 2.0
                     ) and (
-                        time_data[0] < offset_times[offset] + offset_intervals[offset] / 2.0
+                        time_data[0]
+                        < offset_times[offset] + offset_intervals[offset] / 2.0
                     ):
                         offset_index = offset
                         break
@@ -321,7 +326,14 @@ def main(ms):
                 new_pos_str = "%s" % (new_pos)
                 logger.info(
                     "Setting position of beam %d, field %d to %s (t=%f-%f, offset=%d)"
-                    % (beam, field, new_pos_str, time_data[0], time_data[-1], offset_index)
+                    % (
+                        beam,
+                        field,
+                        new_pos_str,
+                        time_data[0],
+                        time_data[-1],
+                        offset_index,
+                    )
                 )
                 # Update the FIELD table with the beam position
                 new_ra = new_pos.ra
