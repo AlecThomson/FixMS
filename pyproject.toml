@@ -25,6 +25,10 @@ myst_parser = "*"
 autoapi = "*"
 sphinx-autoapi = "*"
 
+[tool.poetry.extras]
+dev = ["isort", "black", "sphinx", "numpydoc", "myst_parser", "autoapi", "sphinx-autoapi"]
+
+
 [tool.poetry.scripts]
 fix_ms_corrs = "fixms.fix_ms_corrs:cli"
 fix_ms_dir = "fixms.fix_ms_dir:cli"
