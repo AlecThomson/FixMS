@@ -1,4 +1,4 @@
-https://readthedocs.org/projects/fixms/badge/?version=latest
+![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)
 
 # FixMS
 
