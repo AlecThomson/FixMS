@@ -7,8 +7,19 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-
+numpy = "*"
+astropy = "^5"
+python-casacore = "*"
+tqdm = "*"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.12.0"
+black = "^23.3.0"
+
+[tool.poetry.scripts]
+fix_ms_corrs = "fixms.fix_ms_corrs:cli"
+fix_ms_dir = "fixms.fix_ms_dir:cli"
