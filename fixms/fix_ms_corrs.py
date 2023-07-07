@@ -17,8 +17,7 @@ import numpy as np
 from casacore.tables import makecoldesc, table
 from tqdm import tqdm
 
-from arrakis.logger import logger
-
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
