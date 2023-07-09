@@ -195,7 +195,7 @@ def get_nchunks(ms: Path, chunksize: int, data_column: str = "DATA_ASKAP") -> in
         return int(np.ceil(len(tab.__getattr__(data_column)) / chunksize))
 
 
-def main(
+def fix_ms_corrs(
     ms: Path,
     chunksize: int = 10_000,
     data_column: str = "DATA",
@@ -281,7 +281,7 @@ def cli():
         description=__doc__,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("ms", type=str, help="The MS to fix")
+    parser.add_argument("ms", type=Path, help="The MS to fix")
     parser.add_argument(
         "--chunksize",
         type=int,
@@ -298,7 +298,7 @@ def cli():
         help="The column to write the corrected data to",
     )
     args = parser.parse_args()
-    main(Path(args.ms), args.chunksize, args.data_column)
+    fix_ms_corrs(args.ms, chunksize=args.chunksize, data_column=args.data_column, corrected_data_column=args.corrected_data_column)
 
 
 if __name__ == "__main__":
