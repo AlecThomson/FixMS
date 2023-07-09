@@ -298,7 +298,12 @@ def cli():
         help="The column to write the corrected data to",
     )
     args = parser.parse_args()
-    fix_ms_corrs(args.ms, chunksize=args.chunksize, data_column=args.data_column, corrected_data_column=args.corrected_data_column)
+    fix_ms_corrs(
+        args.ms,
+        chunksize=args.chunksize,
+        data_column=args.data_column,
+        corrected_data_column=args.corrected_data_column,
+    )
 
 
 if __name__ == "__main__":
