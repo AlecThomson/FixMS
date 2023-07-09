@@ -299,7 +299,7 @@ def cli():
     )
     args = parser.parse_args()
     fix_ms_corrs(
-        args.ms,
+        Path(args.ms),
         chunksize=args.chunksize,
         data_column=args.data_column,
         corrected_data_column=args.corrected_data_column,
