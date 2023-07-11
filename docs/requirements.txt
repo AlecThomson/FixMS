@@ -5,4 +5,5 @@ numpydoc
 myst_parser
 autoapi
 sphinx-autoapi
+pydata-sphinx-theme
 -e .

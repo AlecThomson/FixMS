@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixms"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Alec Thomson (S&A, Kensington WA) <alec.thomson@csiro.au>"]
 readme = "README.md"
@@ -27,7 +27,16 @@ autoapi = "*"
 sphinx-autoapi = "*"
 
 [tool.poetry.extras]
-dev = ["isort", "black", "sphinx", "numpydoc", "myst_parser", "autoapi", "sphinx-autoapi"]
+dev = [
+    "isort",
+    "black",
+    "sphinx",
+    "numpydoc",
+    "myst_parser",
+    "autoapi",
+    "sphinx-autoapi",
+    "pydata-sphinx-theme",
+]
 
 
 [tool.poetry.scripts]
