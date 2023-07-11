@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def get_pol_axis(ms: Path, feed_idx: Optional[int]=None) -> u.Quantity:
+def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     """Get the polarization axis from the ASKAP MS. Checks are performed
     to ensure this polarisation axis angle is constant throughout the observation.
 
@@ -32,7 +32,7 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int]=None) -> u.Quantity:
         feed_idx (Optional[int], optional): Specify the entery in the FEED
         table of `ms` to return. This might be required when a subset of a
         measurement set has beene extracted from an observation with a varying
-        orientation. 
+        orientation.
 
     Returns:
         astropy.units.Quantity: The rotation of the PAF throughout the observing.
@@ -45,13 +45,14 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int]=None) -> u.Quantity:
         assert (ms_feed[:, 0] == ms_feed[0, 0]).all() & (
             ms_feed[:, 1] == ms_feed[0, 1]
         ).all(), "The RECEPTOR_ANGLE changes with time, please check the MS"
-        
+
         pol_ang = pol_axes[0, 0].to(u.deg)
     else:
         logger.debug(f"Extracting the third-axis orientation for {feed_idx=}")
         pol_ang = pol_axes[feed_idx, 0].to(u.deg)
 
     return pol_ang
+
 
 def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.ndarray:
     """
@@ -242,16 +243,18 @@ def fix_ms_corrs(
             )
             return
 
-        feed1 = np.unique(tab.getcol('FEED1'))
-        feed2 = np.unique(tab.getcol('FEED2'))
+        feed1 = np.unique(tab.getcol("FEED1"))
+        feed2 = np.unique(tab.getcol("FEED2"))
 
         # For some ASKAP observations the orientation of the third-axis changes throughout
         # the observation. For example, bandpass observations vary this direction as each
-        # beam cycles in the footprint cycles over the calibrator source. 
+        # beam cycles in the footprint cycles over the calibrator source.
         assert len(feed1) == 1 and len(feed2) == 1, f"More than one"
-        assert feed1[0] == feed2[0], f"The unique feed enteries availbe in the data table differ, {feed1=} {feed2=}"    
-        
-        # The two assertions above should enfore enough constraint 
+        assert (
+            feed1[0] == feed2[0]
+        ), f"The unique feed enteries availbe in the data table differ, {feed1=} {feed2=}"
+
+        # The two assertions above should enfore enough constraint
         # to make sure the rotation matix constructed is correct
         feed_idx = feed1[0]
 
