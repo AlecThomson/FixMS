@@ -250,7 +250,7 @@ def fix_ms_corrs(
         # throughout the observation. For example, bandpass observations vary
         # this direction as each beam cycles in the footprint cycles over the
         # calibrator source.
-        assert len(feed1) == 1 and len(feed2) == 1, "More than one feed orientation!"
+        assert len(feed1) == 1 and len(feed2) == 1, "Found more than one feed orientation!"
         assert (
             feed1[0] == feed2[0]
         ), f"The unique feed enteries available in the data table differ, {feed1=} {feed2=}"
