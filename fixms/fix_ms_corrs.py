@@ -31,7 +31,7 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
         ms (Path): The path to the measurement set that will be inspected
         feed_idx (Optional[int], optional): Specify the entery in the FEED
         table of `ms` to return. This might be required when a subset of a
-        measurement set has beene extracted from an observation with a varying
+        measurement set has been extracted from an observation with a varying
         orientation.
 
     Returns:
@@ -218,7 +218,7 @@ def fix_ms_corrs(
     the correction is applied. This is done to ensure that the original data
     are not lost.
 
-    If 'corrected_data_column`'is detected as an existing column then the
+    If 'corrected_data_column' is detected as an existing column then the
     correction will not be applied.
 
     Args:
@@ -246,13 +246,14 @@ def fix_ms_corrs(
         feed1 = np.unique(tab.getcol("FEED1"))
         feed2 = np.unique(tab.getcol("FEED2"))
 
-        # For some ASKAP observations the orientation of the third-axis changes throughout
-        # the observation. For example, bandpass observations vary this direction as each
-        # beam cycles in the footprint cycles over the calibrator source.
-        assert len(feed1) == 1 and len(feed2) == 1, f"More than one"
+        # For some ASKAP observations the orientation of the third-axis changes
+        # throughout the observation. For example, bandpass observations vary
+        # this direction as each beam cycles in the footprint cycles over the
+        # calibrator source.
+        assert len(feed1) == 1 and len(feed2) == 1, "More than one feed orientation!"
         assert (
             feed1[0] == feed2[0]
-        ), f"The unique feed enteries availbe in the data table differ, {feed1=} {feed2=}"
+        ), f"The unique feed enteries available in the data table differ, {feed1=} {feed2=}"
 
         # The two assertions above should enfore enough constraint
         # to make sure the rotation matix constructed is correct
