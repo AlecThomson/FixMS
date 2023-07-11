@@ -161,14 +161,14 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
 
 def get_data_chunk(
-    ms: Path, chunksize: int, data_column: str = "DATA_ASKAP"
+    ms: Path, chunksize: int, data_column: str = "DATA"
 ) -> Iterator[np.ndarray]:
     """Generator function that will yield a chunk of data from the `ms` data table.
 
     Args:
         ms (Path): Measurement set whose data will be iterated over
         chunksize (int): The number of rows to process per chunk
-        data_column (str, optional): The column name of the data to iterate. Defaults to "DATA_ASKAP".
+        data_column (str, optional): The column name of the data to iterate. Defaults to "DATA".
 
     Yields:
         Iterator[np.ndarray]: Chunk of datta to process
@@ -179,14 +179,14 @@ def get_data_chunk(
             yield np.array(data[i : i + chunksize])
 
 
-def get_nchunks(ms: Path, chunksize: int, data_column: str = "DATA_ASKAP") -> int:
+def get_nchunks(ms: Path, chunksize: int, data_column: str = "DATA") -> int:
     """Returns the number of chunks that are needed to iterator over the datacolumsn
     using a specified `chunksize`.
 
     Args:
         ms (Path): Measurement sett thatt will be iterated over
         chunksize (int): Size of a single chunk
-        data_column (str, optional): Name of the datacolumn that will be iterated over. Defaults to "DATA_ASKAP".
+        data_column (str, optional): Name of the datacolumn that will be iterated over. Defaults to "DATA".
 
     Returns:
         int: Number of chunks in a measurement set
@@ -203,11 +203,12 @@ def fix_ms_corrs(
 ) -> None:
     """Apply corrections to the ASKAP visibilities to bring them inline with
     what is expectede from other imagers, including CASA and WSClean. The
-    original data in `data_column` are copied to `DATA_ASKAP`. The corrected
-    datsa are placed back into `data_column`.
+    original data in `data_column` are copied to `corrected_data_column` before
+    the correction is applied. This is done to ensure that the original data
+    are not lost.
 
-    If `CORRECTED_DATA` is detected as an existing column then the correction
-    will not be applied.
+    If 'corrected_data_column`'is detected as an existing column then the
+    correction will not be applied.
 
     Args:
         ms (Path): Path of the ASKAP measurement set tto correct.
