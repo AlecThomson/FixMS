@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixms"
-version = "0.0.3"
+version = "0.1.0"
 description = ""
 authors = ["Alec Thomson (S&A, Kensington WA) <alec.thomson@csiro.au>"]
 readme = "README.md"
@@ -33,3 +33,4 @@ dev = ["isort", "black", "sphinx", "numpydoc", "myst_parser", "autoapi", "sphinx
 [tool.poetry.scripts]
 fix_ms_corrs = "fixms.fix_ms_corrs:cli"
 fix_ms_dir = "fixms.fix_ms_dir:cli"
+fix_ms = "fixms.fix_ms:cli"
