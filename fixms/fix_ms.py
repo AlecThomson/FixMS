@@ -5,10 +5,8 @@ Utility to correct the ASKAP beam positions and apply a rotation
 to apply a change of the reference frame of the visibilities
 """
 import logging
-from argparse import ArgumentParser
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from pathlib import Path
-
-import numpy as np
 
 from fixms.fix_ms_corrs import fix_ms_corrs
 from fixms.fix_ms_dir import fix_ms_dir
@@ -18,7 +16,9 @@ logger.setLevel(logging.INFO)
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(
+        description=__doc__, formatter_class=ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         "ms", help="Measurement set to update", type=str, default=None, nargs="?"
