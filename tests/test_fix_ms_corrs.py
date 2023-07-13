@@ -33,7 +33,7 @@ class Tester(unittest.TestCase):
         self.read_only_ms = Path(
             "tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms"
         )
-        self.ms = Path("test.ms")
+        self.ms = Path("tests/test.ms")
         # Copy the read-only MS file to a temporary file
         logger.info(f"Copying {self.read_only_ms} to {self.ms}")
         shutil.copytree(self.read_only_ms, self.ms, dirs_exist_ok=True)
