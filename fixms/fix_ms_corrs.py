@@ -68,7 +68,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
     NOTES:
     In general, ASKAP forms Stokes I, Q, U, V as follows:
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡I⎤   ⎡    1         0         0          1    ⎤ ⎡XX_a⎤
         ⎢ ⎥   ⎢                                        ⎥ ⎢    ⎥
@@ -81,7 +81,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     Where theta is the polarization axis angle. In the common case of PA=-45deg -> theta=0deg, this becomes:
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡I⎤   ⎡1     0       0    1⎤ ⎡XX_a⎤
         ⎢ ⎥   ⎢                    ⎥ ⎢    ⎥
@@ -93,7 +93,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     or
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡I⎤   ⎡    XX_a + YY_a     ⎤
         ⎢ ⎥   ⎢                    ⎥
@@ -105,7 +105,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     However, most imagers (e.g. wsclean, CASA) expect
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡I⎤   ⎡0.5    0       0    0.5 ⎤ ⎡XX_w⎤
         ⎢ ⎥   ⎢                        ⎥ ⎢    ⎥
@@ -114,10 +114,10 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
         ⎢U⎥   ⎢ 0    0.5     0.5    0  ⎥ ⎢YX_w⎥
         ⎢ ⎥   ⎢                        ⎥ ⎢    ⎥
         ⎣V⎦   ⎣ 0   -0.5⋅i  0.5⋅i   0  ⎦ ⎣YY_w⎦
-    
+
     or
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡I⎤   ⎡  0.5⋅XX_w + 0.5⋅YY_w   ⎤
         ⎢ ⎥   ⎢                        ⎥
@@ -129,7 +129,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     To convert between the two, we can use the following matrix:
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡XX_w⎤   ⎡sin(2.0⋅θ) + 1    cos(2.0⋅θ)      cos(2.0⋅θ)    1 - sin(2.0⋅θ)⎤ ⎡XX_a⎤
         ⎢    ⎥   ⎢                                                              ⎥ ⎢    ⎥
@@ -143,7 +143,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     In the case of PA=-45deg -> theta=0deg, this becomes:
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡XX_w⎤   ⎡1   1   1   1⎤ ⎡XX_a⎤
         ⎢    ⎥   ⎢             ⎥ ⎢    ⎥
@@ -152,10 +152,10 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
         ⎢YX_w⎥   ⎢-1  -1  1   1⎥ ⎢YX_a⎥
         ⎢    ⎥   ⎢             ⎥ ⎢    ⎥
         ⎣YY_w⎦   ⎣1   -1  -1  1⎦ ⎣YY_a⎦
-    
+
     or
 
-    .. code-block:: 
+    .. code-block::
 
         ⎡XX_w⎤   ⎡XX_a + XY_a + YX_a + YY_a ⎤
         ⎢    ⎥   ⎢                          ⎥
@@ -279,7 +279,9 @@ def fix_ms_corrs(
         # throughout the observation. For example, bandpass observations vary
         # this direction as each beam cycles in the footprint cycles over the
         # calibrator source.
-        assert len(feed1) == 1 and len(feed2) == 1, "Found more than one feed orientation!"
+        assert (
+            len(feed1) == 1 and len(feed2) == 1
+        ), "Found more than one feed orientation!"
         assert (
             feed1[0] == feed2[0]
         ), f"The unique feed enteries available in the data table differ, {feed1=} {feed2=}"
