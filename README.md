@@ -1,4 +1,4 @@
-[![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)](https://fixms.readthedocs.io/)
+[![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)](https://fixms.readthedocs.io/) [![Tests](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml/badge.svg)](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml)
 
 # FixMS
 
