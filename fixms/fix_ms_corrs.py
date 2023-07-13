@@ -235,6 +235,32 @@ def get_nchunks(ms: Path, chunksize: int, data_column: str = "DATA") -> int:
         return int(np.ceil(len(tab.__getattr__(data_column)) / chunksize))
 
 
+def check_data(ms: Path, data_column: str, corrected_data_column: str) -> bool:
+    """Check if the data in the `data_column`, with a correction applied, matches
+    the data in the `corrected_data_column`.
+
+    Args:
+        ms (Path): MeasurementSet to check
+        data_column (str): Data column to check
+        corrected_data_column (str): Corrected data column to check
+
+    Returns:
+        bool: If the data matches
+    """
+    with table(ms.as_posix(), readonly=True) as tab:
+        idx = 0
+        data = tab.__getattr__(data_column).getcell(idx)
+        cor_data = tab.__getattr__(corrected_data_column).getcell(idx)
+        while (data == 0 + 0j).all():
+            idx += 1
+            data = tab.__getattr__(data_column).getcell(idx)
+            cor_data = tab.__getattr__(corrected_data_column).getcell(idx)
+
+    ang = get_pol_axis(ms)
+
+    return np.allclose(convert_correlations(data, ang), cor_data)
+
+
 def fix_ms_corrs(
     ms: Path,
     chunksize: int = 10_000,
@@ -270,6 +296,10 @@ def fix_ms_corrs(
             logger.critical(
                 f"Column {corrected_data_column} already exists in {ms}! Exiting..."
             )
+            if check_data(ms, data_column, corrected_data_column):
+                logger.critical(
+                    f"We checked the data in {data_column} against {corrected_data_column} and it looks like the correction has already been applied!"
+                )
             return
 
         feed1 = np.unique(tab.getcol("FEED1"))
