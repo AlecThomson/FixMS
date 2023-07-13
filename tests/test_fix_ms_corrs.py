@@ -6,13 +6,11 @@ Test the fixing the MS correlations
 import logging
 import shutil
 import unittest
-from functools import cached_property
 from pathlib import Path
 from typing import NamedTuple
 
 import astropy.units as u
 import numpy as np
-import pytest
 from casacore.tables import table
 
 from fixms.fix_ms_corrs import convert_correlations, fix_ms_corrs, get_pol_axis
@@ -133,7 +131,7 @@ class Tester(unittest.TestCase):
         V = 1j * (yx - xy)
 
         return Mueller(I, Q, U, V)
-    
+
     def get_wsclean_stokes(self):
         # from https://gitlab.com/aroffringa/aocommon/-/blob/master/include/aocommon/polarization.h
         # *   XX = I + Q  ;   I = (XX + YY)/2
@@ -151,43 +149,58 @@ class Tester(unittest.TestCase):
     def test_rotated_data_I(self):
         mueller_a = self.askap_stokes()
         mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(mueller_a.I, mueller_a_mat.I, atol=1e-4), "Stokes rotation I failed"
+        assert np.allclose(
+            mueller_a.I, mueller_a_mat.I, atol=1e-4
+        ), "Stokes rotation I failed"
 
     def test_rotated_data_Q(self):
         mueller_a = self.askap_stokes()
         mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(mueller_a.Q, mueller_a_mat.Q, atol=1e-4), "Stokes rotation Q failed"
-
+        assert np.allclose(
+            mueller_a.Q, mueller_a_mat.Q, atol=1e-4
+        ), "Stokes rotation Q failed"
 
     def test_rotated_data_U(self):
         mueller_a = self.askap_stokes()
         mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(mueller_a.U, mueller_a_mat.U, atol=1e-4), "Stokes rotation U failed"
+        assert np.allclose(
+            mueller_a.U, mueller_a_mat.U, atol=1e-4
+        ), "Stokes rotation U failed"
 
     def test_rotated_data_V(self):
         mueller_a = self.askap_stokes()
         mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(mueller_a.V, mueller_a_mat.V, atol=1e-4), "Stokes rotation V failed"
+        assert np.allclose(
+            mueller_a.V, mueller_a_mat.V, atol=1e-4
+        ), "Stokes rotation V failed"
 
     def test_stokes_I(self):
         mueller_a = self.askap_stokes_mat()
         mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(mueller_a.I, mueller_w.I, atol=1e-4), "ASKAP and WSClean disagree on Stokes I"
+        assert np.allclose(
+            mueller_a.I, mueller_w.I, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes I"
 
     def test_stokes_Q(self):
         mueller_a = self.askap_stokes_mat()
         mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(mueller_a.Q, mueller_w.Q, atol=1e-2), "ASKAP and WSClean disagree on Stokes Q"
+        assert np.allclose(
+            mueller_a.Q, mueller_w.Q, atol=1e-2
+        ), "ASKAP and WSClean disagree on Stokes Q"
 
     def test_stokes_U(self):
         mueller_a = self.askap_stokes_mat()
         mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(mueller_a.U, mueller_w.U, atol=1e-4), "ASKAP and WSClean disagree on Stokes U"
+        assert np.allclose(
+            mueller_a.U, mueller_w.U, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes U"
 
     def test_stokes_V(self):
         mueller_a = self.askap_stokes_mat()
         mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(mueller_a.V, mueller_w.V, atol=1e-4), "ASKAP and WSClean disagree on Stokes V"
+        assert np.allclose(
+            mueller_a.V, mueller_w.V, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes V"
 
     def tearDown(self) -> None:
         # Remove the temporary MS file
