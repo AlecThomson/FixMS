@@ -33,7 +33,7 @@ class Tester(unittest.TestCase):
     def setUp(self) -> None:
         # Copy the read-only MS file to a temporary file
         self.read_only_ms = Path(
-            "scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms"
+            "tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms"
         )
         self.ms = Path("test.ms")
         # Copy the read-only MS file to a temporary file
