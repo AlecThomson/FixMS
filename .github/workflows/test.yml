@@ -32,6 +32,11 @@ jobs:
         pip install pytest black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
+    - name: Copy test data
+      uses: canastro/copy-file-action@master
+      with:
+        source: "tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms"
+        target: "tests/test.ms"
     - name: Test with pytest
       run: |
         pytest
