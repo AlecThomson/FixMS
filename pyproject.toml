@@ -25,6 +25,8 @@ numpydoc = "*"
 myst_parser = "*"
 autoapi = "*"
 sphinx-autoapi = "*"
+pytest = "*"
+pre-commit = "*"
 
 [tool.poetry.extras]
 dev = [
@@ -36,6 +38,8 @@ dev = [
     "autoapi",
     "sphinx-autoapi",
     "pydata-sphinx-theme",
+    "pytest",
+    "pre-commit",
 ]
 
 
