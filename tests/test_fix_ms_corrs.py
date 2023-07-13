@@ -32,7 +32,7 @@ class Tester(unittest.TestCase):
     # def __init__(self):
     def setUp(self) -> None:
         # Copy the read-only MS file to a temporary file
-        self.read_only_ms = Path('scienceData_SB13671_RACS_1237+00A.beam00_averaged_cal.ms')
+        self.read_only_ms = Path('scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms')
         self.ms = Path('test.ms')
         # Copy the read-only MS file to a temporary file
         logger.info(f"Copying {self.read_only_ms} to {self.ms}")
@@ -89,44 +89,69 @@ class Tester(unittest.TestCase):
         # Check the conversion as written to disk
         assert np.allclose(convert_correlations(self.data,ang), self.cor_data), "Data write failed"
 
+    @staticmethod
+    def askap_stokes_mat(xx, xy, yx, yy, theta):
+        correlations = np.array([xx, xy, yx, yy])
+        # Equation D.1 from ASKAP Observation Guide
+        rot = np.array([
+            [1, 0, 0, 1],
+            [np.sin(2*theta), np.cos(2*theta), np.cos(2*theta), -np.sin(2*theta)], 
+            [-np.cos(2*theta), np.sin(2*theta), np.sin(2*theta), np.cos(2*theta)],
+            [0, -1j, 1j, 0],
+        ]
+        )
+        I, Q, U, V = rot @ correlations
+        return Mueller(I, Q, U, V)
+
+    @staticmethod
+    def askap_stokes(xx, xy, yx, yy, theta):
+        assert theta == -45 * u.deg, "Only works for theta = -45 deg"
+        I = xx + yy
+        Q = xy + yx
+        U = yy - xx
+        V = 1j*(yx - xy)
+
+        return Mueller(I, Q, U, V)
+
     def get_muellers(self):
         ang = get_pol_axis(self.ms)
         xx_a, xy_a, yx_a, yy_a = self.data.T
         xx_w, xy_w, yx_w, yy_w = self.cor_data.T
 
-        if ang == 45*u.deg:
-            I_a = xx_a + yy_a
-            Q_a = xy_a + yx_a
-            U_a = yy_a - xx_a
-            V_a = 1j*(yx_a - xy_a)
+        mueller_a = self.askap_stokes(xx_a, xy_a, yx_a, yy_a, ang)
 
-            I_w = 0.5*(xx_w + yy_w)
-            Q_w = 0.5*(xx_w - yy_w)
-            U_w = 0.5*(xy_w + yx_w)
-            V_w = -0.5j*(xy_w - yx_w)
+        # from https://gitlab.com/aroffringa/aocommon/-/blob/master/include/aocommon/polarization.h
+        # *   XX = I + Q  ;   I = (XX + YY)/2
+        # *   XY = U + iV ;   Q = (XX - YY)/2
+        # *   YX = U - iV ;   U = (XY + YX)/2
+        # *   YY = I - Q  ;   V = -i(XY - YX)/2
 
-        else:
-            raise NotImplementedError(f"Angle {ang} not implemented")
+        I_w = 0.5*(xx_w + yy_w)
+        Q_w = 0.5*(xx_w - yy_w)
+        U_w = 0.5*(xy_w + yx_w)
+        V_w = -0.5j*(xy_w - yx_w)
 
-        mueller_a = Mueller(I_a, Q_a, U_a, V_a)
+
+
+
         mueller_w = Mueller(I_w, Q_w, U_w, V_w)
         return mueller_a, mueller_w
 
     def test_stokes_I(self):
         mueller_a, mueller_w = self.get_muellers()
-        assert np.allclose(mueller_a.I, mueller_w.I, atol=1e-4), "Stokes I changed"
+        assert np.allclose(mueller_a.I, mueller_w.I, atol=1e-4), "Stokes I failed"
 
     def test_stokes_Q(self):
         mueller_a, mueller_w = self.get_muellers()
-        assert np.allclose(mueller_a.Q, mueller_w.Q, atol=1e-4), "Stokes Q changed"
+        assert np.allclose(mueller_a.Q, mueller_w.Q, atol=1e-4), "Stokes Q failed"
     
     def test_stokes_U(self):
         mueller_a, mueller_w = self.get_muellers()
-        assert np.allclose(mueller_a.U, mueller_w.U, atol=1e-4), "Stokes U changed"
+        assert np.allclose(mueller_a.U, mueller_w.U, atol=1e-4), "Stokes U failed"
 
     def test_stokes_V(self):
         mueller_a, mueller_w = self.get_muellers()
-        assert np.allclose(mueller_a.V, mueller_w.V, atol=1e-4), "Stokes V changed"
+        assert np.allclose(mueller_a.V, mueller_w.V, atol=1e-4), "Stokes V failed"
                 
 
     def tearDown(self) -> None:
