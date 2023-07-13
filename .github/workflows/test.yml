@@ -22,6 +22,8 @@ jobs:
         
     steps:
     - uses: actions/checkout@v3
+      with:
+        lfs: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
@@ -32,7 +34,6 @@ jobs:
         pip install pytest black
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
-        cp -rv tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms tests/test.ms
     - name: Test with pytest
       run: |
         pytest
