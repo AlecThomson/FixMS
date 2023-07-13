@@ -1,0 +1,2 @@
+tests/scienceData_SB13671_RACS_1237+00A.beam00_averaged_cal.ms/** filter=lfs diff=lfs merge=lfs -text
+tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms/** filter=lfs diff=lfs merge=lfs -text
