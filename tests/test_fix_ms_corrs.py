@@ -100,20 +100,21 @@ class Tester(unittest.TestCase):
         xx, xy, yx, yy = self.data.T
         correlations = np.array([xx, xy, yx, yy])
         # Equation D.1 from ASKAP Observation Guide
+        # Corrected edition (swapped sine and cosine)
         rot = np.array(
             [
                 [1, 0, 0, 1],
                 [
+                    np.cos(2 * theta),
                     np.sin(2 * theta),
-                    np.cos(2 * theta),
-                    np.cos(2 * theta),
-                    -np.sin(2 * theta),
+                    np.sin(2 * theta),
+                    -np.cos(2 * theta),
                 ],
                 [
-                    -np.cos(2 * theta),
-                    np.sin(2 * theta),
-                    np.sin(2 * theta),
+                    -np.sin(2 * theta),
                     np.cos(2 * theta),
+                    np.cos(2 * theta),
+                    np.sin(2 * theta),
                 ],
                 [0, -1j, 1j, 0],
             ]
@@ -125,10 +126,12 @@ class Tester(unittest.TestCase):
         theta = get_pol_axis(self.ms) + 45 * u.deg
         xx, xy, yx, yy = self.data.T
         assert theta == 0 * u.deg, "Only works for theta = 0 deg"
+        # Solution to Equation D.1 from ASKAP Observation Guide
+        # Corrected edition (swapped sine and cosine)
         I = xx + yy
-        Q = xy + yx
-        U = yy - xx
-        V = 1j * (yx - xy)
+        Q = xx - yy
+        U = xy + yx
+        V = 1j * (-xy + yx)
 
         return Mueller(I, Q, U, V)
 

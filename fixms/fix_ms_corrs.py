@@ -70,38 +70,38 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     .. code-block::
 
-        ⎡I⎤   ⎡    1         0         0          1    ⎤ ⎡XX_a⎤
-        ⎢ ⎥   ⎢                                        ⎥ ⎢    ⎥
-        ⎢Q⎥   ⎢sin(2⋅θ)   cos(2⋅θ)  cos(2⋅θ)  -sin(2⋅θ)⎥ ⎢XY_a⎥
-        ⎢ ⎥ = ⎢                                        ⎥⋅⎢    ⎥
-        ⎢U⎥   ⎢-cos(2⋅θ)  sin(2⋅θ)  sin(2⋅θ)  cos(2⋅θ) ⎥ ⎢YX_a⎥
-        ⎢ ⎥   ⎢                                        ⎥ ⎢    ⎥
-        ⎣V⎦   ⎣    0       -1.0⋅i    1.0⋅i        0    ⎦ ⎣YY_a⎦
+        ⎡I⎤   ⎡    1         0         0          1    ⎤ ⎡XXₐ⎤
+        ⎢ ⎥   ⎢                                        ⎥ ⎢   ⎥
+        ⎢Q⎥   ⎢cos(2⋅θ)   sin(2⋅θ)  sin(2⋅θ)  -cos(2⋅θ)⎥ ⎢XYₐ⎥
+        ⎢ ⎥ = ⎢                                        ⎥⋅⎢   ⎥
+        ⎢U⎥   ⎢-sin(2⋅θ)  cos(2⋅θ)  cos(2⋅θ)  sin(2⋅θ) ⎥ ⎢YXₐ⎥
+        ⎢ ⎥   ⎢                                        ⎥ ⎢   ⎥
+        ⎣V⎦   ⎣    0       -1.0⋅ⅈ    1.0⋅ⅈ        0    ⎦ ⎣YYₐ⎦
 
 
     Where theta is the polarization axis angle. In the common case of PA=-45deg -> theta=0deg, this becomes:
 
     .. code-block::
 
-        ⎡I⎤   ⎡1     0       0    1⎤ ⎡XX_a⎤
-        ⎢ ⎥   ⎢                    ⎥ ⎢    ⎥
-        ⎢Q⎥   ⎢0     1       1    0⎥ ⎢XY_a⎥
-        ⎢ ⎥ = ⎢                    ⎥⋅⎢    ⎥
-        ⎢U⎥   ⎢-1    0       0    1⎥ ⎢YX_a⎥
-        ⎢ ⎥   ⎢                    ⎥ ⎢    ⎥
-        ⎣V⎦   ⎣0   -1.0⋅i  1.0⋅i  0⎦ ⎣YY_a⎦
+        ⎡I⎤   ⎡1    0       0    1 ⎤ ⎡XXₐ⎤
+        ⎢ ⎥   ⎢                    ⎥ ⎢   ⎥
+        ⎢Q⎥   ⎢1    0       0    -1⎥ ⎢XYₐ⎥
+        ⎢ ⎥ = ⎢                    ⎥⋅⎢   ⎥
+        ⎢U⎥   ⎢0    1       1    0 ⎥ ⎢YXₐ⎥
+        ⎢ ⎥   ⎢                    ⎥ ⎢   ⎥
+        ⎣V⎦   ⎣0  -1.0⋅ⅈ  1.0⋅ⅈ  0 ⎦ ⎣YYₐ⎦
 
     or
 
     .. code-block::
 
-        ⎡I⎤   ⎡    XX_a + YY_a     ⎤
-        ⎢ ⎥   ⎢                    ⎥
-        ⎢Q⎥   ⎢    XY_a + YX_a     ⎥
-        ⎢ ⎥ = ⎢                    ⎥
-        ⎢U⎥   ⎢    -XX_a + YY_a    ⎥
-        ⎢ ⎥   ⎢                    ⎥
-        ⎣V⎦   ⎣-i⋅XY_a + 1.0⋅i⋅YX_a⎦
+        ⎡I⎤   ⎡    XXₐ + YYₐ     ⎤
+        ⎢ ⎥   ⎢                  ⎥
+        ⎢Q⎥   ⎢    XXₐ - YYₐ     ⎥
+        ⎢ ⎥ = ⎢                  ⎥
+        ⎢U⎥   ⎢    XYₐ + YXₐ     ⎥
+        ⎢ ⎥   ⎢                  ⎥
+        ⎣V⎦   ⎣-ⅈ⋅XYₐ + 1.0⋅ⅈ⋅YXₐ⎦
 
     However, most imagers (e.g. wsclean, CASA) expect
 
@@ -131,13 +131,13 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     .. code-block::
 
-        ⎡XX_w⎤   ⎡sin(2.0⋅θ) + 1    cos(2.0⋅θ)      cos(2.0⋅θ)    1 - sin(2.0⋅θ)⎤ ⎡XX_a⎤
-        ⎢    ⎥   ⎢                                                              ⎥ ⎢    ⎥
-        ⎢XY_w⎥   ⎢ -cos(2.0⋅θ)    sin(2.0⋅θ) + 1  sin(2.0⋅θ) - 1    cos(2.0⋅θ)  ⎥ ⎢XY_a⎥
-        ⎢    ⎥ = ⎢                                                              ⎥⋅⎢    ⎥
-        ⎢YX_w⎥   ⎢ -cos(2.0⋅θ)    sin(2.0⋅θ) - 1  sin(2.0⋅θ) + 1    cos(2.0⋅θ)  ⎥ ⎢YX_a⎥
-        ⎢    ⎥   ⎢                                                              ⎥ ⎢    ⎥
-        ⎣YY_w⎦   ⎣1 - sin(2.0⋅θ)   -cos(2.0⋅θ)     -cos(2.0⋅θ)    sin(2.0⋅θ) + 1⎦ ⎣YY_a⎦
+        ⎡XX_w⎤   ⎡cos(2.0⋅θ) + 1    sin(2.0⋅θ)      sin(2.0⋅θ)    1 - cos(2.0⋅θ)⎤ ⎡XXₐ⎤
+        ⎢    ⎥   ⎢                                                              ⎥ ⎢   ⎥
+        ⎢XY_w⎥   ⎢ -sin(2.0⋅θ)    cos(2.0⋅θ) + 1  cos(2.0⋅θ) - 1    sin(2.0⋅θ)  ⎥ ⎢XYₐ⎥
+        ⎢    ⎥ = ⎢                                                              ⎥⋅⎢   ⎥
+        ⎢YX_w⎥   ⎢ -sin(2.0⋅θ)    cos(2.0⋅θ) - 1  cos(2.0⋅θ) + 1    sin(2.0⋅θ)  ⎥ ⎢YXₐ⎥
+        ⎢    ⎥   ⎢                                                              ⎥ ⎢   ⎥
+        ⎣YY_w⎦   ⎣1 - cos(2.0⋅θ)   -sin(2.0⋅θ)     -sin(2.0⋅θ)    cos(2.0⋅θ) + 1⎦ ⎣YYₐ⎦
 
     Where `_w` is the 'wsclean' format and _a is the 'ASKAP' format.
 
@@ -145,25 +145,25 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
     .. code-block::
 
-        ⎡XX_w⎤   ⎡1   1   1   1⎤ ⎡XX_a⎤
-        ⎢    ⎥   ⎢             ⎥ ⎢    ⎥
-        ⎢XY_w⎥   ⎢-1  1   -1  1⎥ ⎢XY_a⎥
-        ⎢    ⎥ = ⎢             ⎥⋅⎢    ⎥
-        ⎢YX_w⎥   ⎢-1  -1  1   1⎥ ⎢YX_a⎥
-        ⎢    ⎥   ⎢             ⎥ ⎢    ⎥
-        ⎣YY_w⎦   ⎣1   -1  -1  1⎦ ⎣YY_a⎦
+        ⎡XX_w⎤   ⎡2  0  0  0⎤ ⎡XXₐ⎤
+        ⎢    ⎥   ⎢          ⎥ ⎢   ⎥
+        ⎢XY_w⎥   ⎢0  2  0  0⎥ ⎢XYₐ⎥
+        ⎢    ⎥ = ⎢          ⎥⋅⎢   ⎥
+        ⎢YX_w⎥   ⎢0  0  2  0⎥ ⎢YXₐ⎥
+        ⎢    ⎥   ⎢          ⎥ ⎢   ⎥
+        ⎣YY_w⎦   ⎣0  0  0  2⎦ ⎣YYₐ⎦
 
     or
 
     .. code-block::
 
-        ⎡XX_w⎤   ⎡XX_a + XY_a + YX_a + YY_a ⎤
-        ⎢    ⎥   ⎢                          ⎥
-        ⎢XY_w⎥   ⎢-XX_a + XY_a - YX_a + YY_a⎥
-        ⎢    ⎥ = ⎢                          ⎥
-        ⎢YX_w⎥   ⎢-XX_a - XY_a + YX_a + YY_a⎥
-        ⎢    ⎥   ⎢                          ⎥
-        ⎣YY_w⎦   ⎣XX_a - XY_a - YX_a + YY_a ⎦
+        ⎡XX_w⎤   ⎡2⋅XXₐ⎤
+        ⎢    ⎥   ⎢     ⎥
+        ⎢XY_w⎥   ⎢2⋅XYₐ⎥
+        ⎢    ⎥ = ⎢     ⎥
+        ⎢YX_w⎥   ⎢2⋅YXₐ⎥
+        ⎢    ⎥   ⎢     ⎥
+        ⎣YY_w⎦   ⎣2⋅YYₐ⎦
 
 
     """
@@ -171,28 +171,28 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
     correction_matrix = np.matrix(
         [
             [
-                np.sin(2.0 * theta) + 1,
-                np.cos(2.0 * theta),
-                np.cos(2.0 * theta),
-                1 - np.sin(2.0 * theta),
+                np.cos(2.0 * theta) + 1,
+                np.sin(2.0 * theta),
+                np.sin(2.0 * theta),
+                1 - np.cos(2.0 * theta),
             ],
             [
-                -np.cos(2.0 * theta),
-                np.sin(2.0 * theta) + 1,
-                np.sin(2.0 * theta) - 1,
-                np.cos(2.0 * theta),
+                -np.sin(2.0 * theta),
+                np.cos(2.0 * theta) + 1,
+                np.cos(2.0 * theta) - 1,
+                np.sin(2.0 * theta),
             ],
             [
-                -np.cos(2.0 * theta),
-                np.sin(2.0 * theta) - 1,
-                np.sin(2.0 * theta) + 1,
-                np.cos(2.0 * theta),
+                -np.sin(2.0 * theta),
+                np.cos(2.0 * theta) - 1,
+                np.cos(2.0 * theta) + 1,
+                np.sin(2.0 * theta),
             ],
             [
-                1 - np.sin(2.0 * theta),
-                -np.cos(2.0 * theta),
-                -np.cos(2.0 * theta),
-                np.sin(2.0 * theta) + 1,
+                1 - np.cos(2.0 * theta),
+                -np.sin(2.0 * theta),
+                -np.sin(2.0 * theta),
+                np.cos(2.0 * theta) + 1,
             ],
         ]
     )
