@@ -39,6 +39,8 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     """
     with table((ms / "FEED").as_posix(), readonly=True, ack=False) as tf:
         ms_feed = tf.getcol("RECEPTOR_ANGLE") * u.rad
+        # PAF is at 45deg to feeds
+        # 45 - feed_angle = pol_angle
         pol_axes = -(ms_feed - 45.0 * u.deg)
 
     if feed_idx is None:
@@ -167,7 +169,7 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
 
 
     """
-    theta = (pol_axis + 45.0 * u.deg).to(u.rad).value
+    theta = pol_axis.to(u.rad).value
     correction_matrix = np.matrix(
         [
             [
