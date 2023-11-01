@@ -2,6 +2,9 @@
 
 # FixMS
 
+WARNING FOR USERS:
+These scripts are still being verified for complete correctness. Please use at your own risk.
+
 ASKAP utilities for updating MeasurementSets for external imagers.
 
 ASKAP MSs are produced in a way that breaks compatibility with most other imagers (e.g. CASA, WSclean). Here we provide two modules (with CLI hooks) that perform the fixes that need to be applied in order to produce astronomically correct imagers with non-YandaSoft imagers:
