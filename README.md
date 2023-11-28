@@ -1,4 +1,4 @@
-[![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)](https://fixms.readthedocs.io/) [![Tests](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml/badge.svg)](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml) [![PyPi](https://github.com/AlecThomson/FixMS/actions/workflows/publish.yml/badge.svg)](https://pypi.org/project/fixms/)[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/AlecThomson/FixMS/main.svg)](https://results.pre-commit.ci/latest/github/AlecThomson/FixMS/main)
+[![rtd](https://readthedocs.org/projects/fixms/badge/?version=latest)](https://fixms.readthedocs.io/) [![Tests](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml/badge.svg)](https://github.com/AlecThomson/FixMS/actions/workflows/test.yml) [![PyPi](https://github.com/AlecThomson/FixMS/actions/workflows/publish.yml/badge.svg)](https://pypi.org/project/fixms/) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/AlecThomson/FixMS/main.svg)](https://results.pre-commit.ci/latest/github/AlecThomson/FixMS/main)
 
 
 # FixMS
