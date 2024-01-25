@@ -58,13 +58,16 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     return pol_ang
 
 
-def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.ndarray:
+def convert_correlations(
+    correlations: np.ndarray, pol_axis: u.Quantity, fix_stokes_factor: bool = True
+) -> np.ndarray:
     """
     Convert ASKAP standard correlations to the 'standard' correlations
 
     Args:
         correlations (np.ndarray): The correlations from the MS. Has shape (NCOR, NCHAN, 4)
         pol_axis (astropy.units.Quantity): The polarization axis angle of the MS
+        fix_stokes_factor (bool, optional): Whether to fix the Stokes factor. Defaults to True.
 
     Returns:
         np.ndarray: The correlations in the 'standard' format
@@ -201,7 +204,12 @@ def convert_correlations(correlations: np.ndarray, pol_axis: u.Quantity) -> np.n
         ]
     )
     # This is a matrix multiplication broadcasted along the time and channel axes
-    return np.einsum("ij,...j->...i", correction_matrix, correlations)
+    rotated_correlations = np.einsum("ij,...j->...i", correction_matrix, correlations)
+    if not fix_stokes_factor:
+        logger.warning("Not fixing Stokes factor! Multiplying by 0.5...")
+        rotated_correlations *= 0.5
+
+    return rotated_correlations
 
 
 def get_data_chunk(
@@ -270,6 +278,7 @@ def fix_ms_corrs(
     chunksize: int = 10_000,
     data_column: str = "DATA",
     corrected_data_column: str = "CORRECTED_DATA",
+    fix_stokes_factor: bool = True,
 ) -> None:
     """Apply corrections to the ASKAP visibilities to bring them inline with
     what is expectede from other imagers, including CASA and WSClean. The
@@ -285,6 +294,7 @@ def fix_ms_corrs(
         chunksize (int, optional): Size of chunked data to correct. Defaults to 10_000.
         data_column (str, optional): The name of the data column to correct. Defaults to "DATA".
         corrected_data_column (str, optional): The name of the corrected data column. Defaults to "CORRECTED_DATA".
+        fix_stokes_factor (bool, optional): Whether to fix the Stokes factor. Defaults to True.
     """
     logger.info(f"Correcting {data_column} of {str(ms)}.")
 
@@ -358,6 +368,7 @@ def fix_ms_corrs(
                 data_chunk_cor = convert_correlations(
                     data_chunk,
                     pol_axis,
+                    fix_stokes_factor=fix_stokes_factor,
                 )
                 tab.putcol(
                     corrected_data_column,
@@ -396,12 +407,19 @@ def cli():
         default="CORRECTED_DATA",
         help="The column to write the corrected data to",
     )
+    parser.add_argument(
+        "--no-fix-stokes-factor",
+        dest="no_fix_stokes_factor",
+        action="store_true",
+        help="Don't fix the Stokes factor",
+    )
     args = parser.parse_args()
     fix_ms_corrs(
         Path(args.ms),
         chunksize=args.chunksize,
         data_column=args.data_column,
         corrected_data_column=args.corrected_data_column,
+        fix_stokes_factor=not args.no_fix_stokes_factor,
     )
 
 
