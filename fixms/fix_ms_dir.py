@@ -13,7 +13,8 @@ import sys
 import numpy as np
 from casacore.tables import table, tablecopy, tableexists, taql
 
-logger = logging.getLogger(__name__)
+from fixms.logger import logger
+
 logger.setLevel(logging.INFO)
 
 RAD2DEG = 180.0 / math.pi
