@@ -411,7 +411,7 @@ def cli():
         "--no-fix-stokes-factor",
         dest="no_fix_stokes_factor",
         action="store_true",
-        help="Don't fix the Stokes factor",
+        help="Don't fix the Stokes factor. Use this if you have *not* used ASKAPsoft. If you have used ASKAPsoft, you should leave this option alone.",
     )
     args = parser.parse_args()
     fix_ms_corrs(
