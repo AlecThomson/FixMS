@@ -12,9 +12,11 @@ import sys
 
 import numpy as np
 from casacore.tables import table, tablecopy, tableexists, taql
+from tqdm import trange
 
-from fixms.logger import logger
+from fixms.logger import TqdmToLogger, logger
 
+TQDM_OUT = TqdmToLogger(logger, level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 RAD2DEG = 180.0 / math.pi
@@ -227,6 +229,7 @@ def decs_rad(dec_string):
 
 
 def fix_ms_dir(ms):
+    logger.info("Fixing FEED directions in %s" % (ms))
     # Check that the observation wasn't in pol_fixed mode
     with table("%s/ANTENNA" % (ms), readonly=True, ack=False) as ta:
         ant_mount = ta.getcol("MOUNT", 0, 1)
@@ -275,7 +278,7 @@ def fix_ms_dir(ms):
         offset_times = t1.getcol("TIME")
         offset_intervals = t1.getcol("INTERVAL")
         logger.info("Found %d offsets in FEED table for beam %d" % (n_offsets, beam))
-        for offset_index in range(n_offsets):
+        for offset_index in trange(n_offsets, desc="Fixing offsets", file=TQDM_OUT):
             offset = t1.getcol("BEAM_OFFSET")[offset_index]
             logger.info(
                 "Offset %d : t=%f-%f : (%fd,%fd)"
@@ -289,7 +292,7 @@ def fix_ms_dir(ms):
             )
 
         # Update the beam position for each field
-        for field in range(n_fields):
+        for field in trange(n_fields, desc="Fixing fields", file=TQDM_OUT):
             with table(ms, readonly=True, ack=False) as t:
                 # Get times for the specified field
                 tfdata = taql(
@@ -347,6 +350,8 @@ def fix_ms_dir(ms):
             tp.putcol("DELAY_DIR", ms_phase)
             tp.putcol("PHASE_DIR", ms_phase)
             tp.putcol("REFERENCE_DIR", ms_phase)
+
+    logger.info("Finished fixed FEED directions")
 
 
 def cli():

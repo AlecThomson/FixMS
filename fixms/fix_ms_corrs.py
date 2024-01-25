@@ -18,8 +18,9 @@ import numpy as np
 from casacore.tables import makecoldesc, table
 from tqdm import tqdm
 
-from fixms.logger import logger
+from fixms.logger import TqdmToLogger, logger
 
+TQDM_OUT = TqdmToLogger(logger, level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 
@@ -351,7 +352,9 @@ def fix_ms_corrs(
         else:
             # Only perform this correction if the data column was
             # successfully renamed.
-            for data_chunk in tqdm(data_chunks, total=nchunks):
+            for data_chunk in tqdm(
+                data_chunks, total=nchunks, file=TQDM_OUT, desc="Rotating correlations"
+            ):
                 data_chunk_cor = convert_correlations(
                     data_chunk,
                     pol_axis,
@@ -364,6 +367,10 @@ def fix_ms_corrs(
                 )
                 tab.flush()
                 start_row += len(data_chunk_cor)
+
+    logger.info(
+        f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column."
+    )
 
 
 def cli():
