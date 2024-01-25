@@ -18,7 +18,8 @@ import numpy as np
 from casacore.tables import makecoldesc, table
 from tqdm import tqdm
 
-logger = logging.getLogger(__name__)
+from fixms.logger import logger
+
 logger.setLevel(logging.INFO)
 
 
