@@ -10,8 +10,8 @@ from pathlib import Path
 
 from fixms.fix_ms_corrs import fix_ms_corrs
 from fixms.fix_ms_dir import fix_ms_dir
+from fixms.logger import logger
 
-logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
