@@ -39,7 +39,12 @@ def get_parser() -> ArgumentParser:
         default="CORRECTED_DATA",
         help="The column to write the corrected data to",
     )
-
+    parser.add_argument(
+        "--no-fix-stokes-factor",
+        dest="no_fix_stokes_factor",
+        action="store_true",
+        help="Don't fix the Stokes factor. Use this if you have *not* used ASKAPsoft. If you have used ASKAPsoft, you should leave this option alone.",
+    )
     return parser
 
 
@@ -55,6 +60,7 @@ def cli() -> None:
         chunksize=args.chunksize,
         data_column=args.data_column,
         corrected_data_column=args.corrected_data_column,
+        fix_stokes_factor=not args.no_fix_stokes_factor,
     )
 
 
