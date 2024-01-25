@@ -293,7 +293,7 @@ def fix_ms_dir(ms):
 
         # Update the beam position for each field
         for field in trange(n_fields, desc="Fixing fields", file=TQDM_OUT):
-            with table(ms, readonly=True, ack=False) as _:
+            with table(ms, readonly=True, ack=False) as t:
                 # Get times for the specified field
                 tfdata = taql(
                     "select from $t where FIELD_ID==$field and FEED1==$beam and ANTENNA1==0 and ANTENNA2==0"
