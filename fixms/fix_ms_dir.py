@@ -232,10 +232,9 @@ def restore_ms_dir(ms):
     """Restore the direction to the ASKAPsoft standard."""
 
     if tableexists("%s/FIELD_OLD" % (ms)):
-
         logger.info("Restoring FIELD directions in %s" % (ms))
         tp = table("{}/FIELD".format(ms), readonly=False, ack=False)
-        fp = table("%s/FIELD_OLD" %(ms), readonly=True, ack=False)
+        fp = table("%s/FIELD_OLD" % (ms), readonly=True, ack=False)
         field_dir = fp.getcol("PHASE_DIR")
         tp.putcol("PHASE_DIR", field_dir)
         tp.putcol("DELAY_DIR", field_dir)
@@ -243,8 +242,10 @@ def restore_ms_dir(ms):
         tp.flush()
         tp.close()
     else:
-        logger.warning("No `FIELD_OLD` table in %s - cannot restore direction if direction has not changed." % (ms))
-
+        logger.warning(
+            "No `FIELD_OLD` table in %s - cannot restore direction if direction has not changed."
+            % (ms)
+        )
 
 
 def fix_ms_dir(ms):
@@ -388,9 +389,10 @@ def cli():
         "ms", help="Measurement set to update", type=str, default=None, nargs="?"
     )
     parser.add_argument(
-        "-r", "--restore",
+        "-r",
+        "--restore",
         action="store_true",
-        help="Switch to restore direction to the original ASKAPsoft pipeline direction"
+        help="Switch to restore direction to the original ASKAPsoft pipeline direction",
     )
     # Parse the command line
     args = parser.parse_args()
