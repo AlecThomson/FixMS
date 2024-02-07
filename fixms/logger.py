@@ -4,6 +4,81 @@
 
 import io
 import logging
+import sys
+from importlib.metadata import version
+from typing import List
+
+import astropy.units as u
+from astropy.time import Time
+from casacore.tables import table
+
+
+def update_history(
+    ms: str,
+    message: str,
+    app_params: List[str] = [],
+    obs_id: int = 0,
+    priority: str = "NORMAL",
+) -> None:
+    _allowed_priorities = ("DEBUGGING", "WARN", "NORMAL", "SEVERE")
+    if priority not in _allowed_priorities:
+        raise ValueError(
+            f"Priority must be one of {_allowed_priorities}, got {priority}"
+        )
+
+    this_program = f"fixms-{version('fixms')}"
+    now = (Time.now().mjd * u.day).to(u.second).value
+    cli_args = sys.argv
+    history_row = {
+        "TIME": now,
+        "OBSERVATION_ID": obs_id,
+        "MESSAGE": message,
+        "PRIORITY": priority,
+        "CLI_COMMAND": cli_args,
+        "APP_PARAMS": app_params,
+        "ORIGIN": this_program,
+    }
+    with table(f"{ms}/HISTORY", readonly=False) as history:
+        history.addrows(1)
+        for key, value in history_row.items():
+            history.putcell(key, history.nrows() - 1, value)
+
+
+class LoggerWithHistory(logging.Logger):
+    """Custom logger that will also update the HISTORY table in the MS."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def info(self, message, *args, ms=None, app_params=[], **kwargs):
+        super().info(message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority="NORMAL")
+
+    def warning(self, message, *args, ms=None, app_params=[], **kwargs):
+        super().warning(message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority="WARN")
+
+    def error(self, message, *args, ms=None, app_params=[], **kwargs):
+        super().error(message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority="SEVERE")
+
+    def critical(self, message, *args, ms=None, app_params=[], **kwargs):
+        super().error(message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority="SEVERE")
+
+    def debug(self, message, *args, ms=None, app_params=[], **kwargs):
+        super().debug(message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority="DEBUGGING")
+
+    def log(self, level, message, *args, ms=None, app_params=[], **kwargs):
+        super().log(level, message, *args, **kwargs)
+        if ms is not None:
+            update_history(ms, message, app_params, priority=level)
 
 
 class TqdmToLogger(io.StringIO):
@@ -58,7 +133,7 @@ class CustomFormatter(logging.Formatter):
 
 def get_fixms_logger(
     name: str = "fixms", attach_handler: bool = True
-) -> logging.Logger:
+) -> LoggerWithHistory:
     """Will construct a logger object.
 
     Args:
@@ -69,7 +144,8 @@ def get_fixms_logger(
         logging.Logger: The appropriate logger
     """
     logging.captureWarnings(True)
-    logger = logging.getLogger(name)
+    # logger = logging.getLogger(name)
+    logger = LoggerWithHistory(name)
     logger.setLevel(logging.WARNING)
 
     if attach_handler:
