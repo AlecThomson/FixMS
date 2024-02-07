@@ -229,7 +229,7 @@ def decs_rad(dec_string):
 
 
 def fix_ms_dir(ms):
-    logger.info("Fixing FEED directions in %s" % (ms))
+    logger.info("Fixing FEED directions in %s" % (ms), ms=ms)
     # Check that the observation wasn't in pol_fixed mode
     with table("%s/ANTENNA" % (ms), readonly=True, ack=False) as ta:
         ant_mount = ta.getcol("MOUNT", 0, 1)
@@ -240,24 +240,24 @@ def fix_ms_dir(ms):
     beam = beam_from_ms(ms)
 
     if not tableexists("%s/FIELD_OLD" % (ms)):
-        logger.info("Making copy of original FIELD table")
+        logger.info("Making copy of original FIELD table", ms=ms)
         tablecopy(tablename="%s/FIELD" % (ms), newtablename="%s/FIELD_OLD" % (ms))
     else:
-        logger.info("Original copy of FIELD table is being used")
+        logger.info("Original copy of FIELD table is being used", ms=ms)
 
     if not tableexists("%s/FEED_OLD" % (ms)):
-        logger.info("Making copy of original FEED table")
+        logger.info("Making copy of original FEED table", ms=ms)
         tablecopy(tablename="%s/FEED" % (ms), newtablename="%s/FEED_OLD" % (ms))
     else:
-        logger.info("Original copy of FEED table is being used")
+        logger.info("Original copy of FEED table is being used", ms=ms)
 
-    logger.info("Reading phase directions")
+    logger.info("Reading phase directions", ms=ms)
     with table("%s/FIELD_OLD" % (ms), readonly=True, ack=False) as tp:
         ms_phase = tp.getcol("PHASE_DIR")
 
     # Work out how many fields are in the MS.
     n_fields = ms_phase.shape[0]
-    logger.info("Found %d fields in FIELD table" % (n_fields))
+    logger.info("Found %d fields in FIELD table" % (n_fields), ms=ms)
 
     # Open up the MS FEED table so we can work out what the offset is for the beam.
     with table("%s/FEED" % (ms), readonly=False, ack=False) as tf:
@@ -277,7 +277,9 @@ def fix_ms_dir(ms):
         n_offsets = t1.getcol("BEAM_OFFSET").shape[0]
         offset_times = t1.getcol("TIME")
         offset_intervals = t1.getcol("INTERVAL")
-        logger.info("Found %d offsets in FEED table for beam %d" % (n_offsets, beam))
+        logger.info(
+            "Found %d offsets in FEED table for beam %d" % (n_offsets, beam), ms=ms
+        )
         for offset_index in trange(n_offsets, desc="Fixing offsets", file=TQDM_OUT):
             offset = t1.getcol("BEAM_OFFSET")[offset_index]
             logger.info(
@@ -288,7 +290,8 @@ def fix_ms_dir(ms):
                     offset_times[offset_index] + offset_intervals[offset_index] / 2.0,
                     -offset[0][0] * 180.0 / np.pi,
                     offset[0][1] * 180.0 / np.pi,
-                )
+                ),
+                ms=ms,
             )
 
         # Update the beam position for each field
@@ -300,7 +303,7 @@ def fix_ms_dir(ms):
                 )
                 time_data = tfdata.getcol("TIME")
                 if len(time_data) == 0:
-                    #        logger.info("Warning: Couldn't find valid data for field %d" %(field))
+                    #        logger.info("Warning: Couldn't find valid data for field %d" %(field), ms=ms)
                     continue
 
                 offset_index = -1
@@ -315,7 +318,7 @@ def fix_ms_dir(ms):
                         offset_index = offset
                         break
 
-                #    logger.info("Field %d : t=%f : offset=%d" %(field, time_data[0], offset_index))
+                #    logger.info("Field %d : t=%f : offset=%d" %(field, time_data[0], offset_index), ms=ms)
                 # Obtain the offset for the current field.
                 offset = t1.getcol("BEAM_OFFSET")[offset_index]
 
@@ -337,7 +340,8 @@ def fix_ms_dir(ms):
                         time_data[0],
                         time_data[-1],
                         offset_index,
-                    )
+                    ),
+                    ms=ms,
                 )
                 # Update the FIELD table with the beam position
                 new_ra = new_pos.ra
@@ -351,7 +355,7 @@ def fix_ms_dir(ms):
             tp.putcol("PHASE_DIR", ms_phase)
             tp.putcol("REFERENCE_DIR", ms_phase)
 
-    logger.info("Finished fixed FEED directions")
+    logger.info("Finished fixed FEED directions", ms=ms)
 
 
 def cli():
