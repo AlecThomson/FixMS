@@ -296,23 +296,35 @@ def fix_ms_corrs(
         corrected_data_column (str, optional): The name of the corrected data column. Defaults to "CORRECTED_DATA".
         fix_stokes_factor (bool, optional): Whether to fix the Stokes factor. Defaults to True.
     """
-    logger.info(f"Correcting {data_column} of {str(ms)}.")
 
+    _function_args = [f"{key}={val}" for key, val in locals().items()]
+
+    logger.info(
+        f"Correcting {data_column} of {str(ms)}.", ms=ms, app_params=_function_args
+    )
     # Do checks
     with table(ms.as_posix(), readonly=True, ack=False) as tab:
         cols = tab.colnames()
         # Check if 'data_column' exists
         if data_column not in cols:
-            logger.critical(f"Column {data_column} does not exist in {ms}! Exiting...")
+            logger.critical(
+                f"Column {data_column} does not exist in {ms}! Exiting...",
+                ms=ms,
+                app_params=_function_args,
+            )
             return
         # Check if 'corrected_data_column' exists
         if corrected_data_column in cols:
             logger.critical(
-                f"Column {corrected_data_column} already exists in {ms}! Exiting..."
+                f"Column {corrected_data_column} already exists in {ms}! Exiting...",
+                ms=ms,
+                app_params=_function_args,
             )
             if check_data(ms, data_column, corrected_data_column):
                 logger.critical(
-                    f"We checked the data in {data_column} against {corrected_data_column} and it looks like the correction has already been applied!"
+                    f"We checked the data in {data_column} against {corrected_data_column} and it looks like the correction has already been applied!",
+                    ms=ms,
+                    app_params=_function_args,
                 )
             return
 
@@ -336,7 +348,7 @@ def fix_ms_corrs(
 
     # Get the polarization axis
     pol_axis = get_pol_axis(ms, feed_idx=feed_idx)
-    logger.info(f"Polarization axis is {pol_axis}")
+    logger.info(f"Polarization axis is {pol_axis}", ms=ms, app_params=_function_args)
 
     # Get the data chunk by chunk and convert the correlations
     # then write them back to the MS in the 'data_column' column
@@ -357,7 +369,9 @@ def fix_ms_corrs(
                     f"Column {corrected_data_column} already exists in {ms}! You should never see this message! "
                     f"Possible an existing {data_column} has already been corrected. "
                     f"No correction will be applied. "
-                )
+                ),
+                ms=ms,
+                app_params=_function_args,
             )
         else:
             # Only perform this correction if the data column was
@@ -380,7 +394,9 @@ def fix_ms_corrs(
                 start_row += len(data_chunk_cor)
 
     logger.info(
-        f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column."
+        f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column.",
+        ms=ms,
+        app_params=_function_args,
     )
 
 
