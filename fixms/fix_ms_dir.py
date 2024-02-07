@@ -228,6 +228,25 @@ def decs_rad(dec_string):
     return r
 
 
+def restore_ms_dir(ms):
+    """Restore the direction to the ASKAPsoft standard."""
+
+    if tableexists("%s/FIELD_OLD" % (ms)):
+
+        logger.info("Restoring FIELD directions in %s" % (ms))
+        tp = table("{}/FIELD".format(ms), readonly=False, ack=False)
+        fp = table("%s/FIELD_OLD" %(ms), readonly=True, ack=False)
+        field_dir = fp.getcol("PHASE_DIR")
+        tp.putcol("PHASE_DIR", field_dir)
+        tp.putcol("DELAY_DIR", field_dir)
+        tp.putcol("REFERENCE_DIR", field_dir)
+        tp.flush()
+        tp.close()
+    else:
+        logger.warning("No `FIELD_OLD` table in %s - cannot restore direction if direction has not changed." % (ms))
+
+
+
 def fix_ms_dir(ms):
     logger.info("Fixing FEED directions in %s" % (ms))
     # Check that the observation wasn't in pol_fixed mode
@@ -368,11 +387,18 @@ def cli():
     parser.add_argument(
         "ms", help="Measurement set to update", type=str, default=None, nargs="?"
     )
+    parser.add_argument(
+        "-r", "--restore",
+        action="store_true",
+        help="Switch to restore direction to the original ASKAPsoft pipeline direction"
+    )
     # Parse the command line
     args = parser.parse_args()
 
-    # Call the main function
-    fix_ms_dir(args.ms)
+    if args.restore:
+        restore_ms_dir(args.ms)
+    else:
+        fix_ms_dir(args.ms)
 
 
 if __name__ == "__main__":
