@@ -10,7 +10,7 @@ ASKAP utilities for updating MeasurementSets for external imagers.
 
 ASKAP MSs are produced in a way that breaks compatibility with most other imagers (e.g. CASA, WSclean). Here we provide two modules (with CLI hooks) that perform the fixes that need to be applied in order to produce astronomically correct imagers with non-YandaSoft imagers:
 
-1. `fix_ms_dir` : ASKAP MeasurementSets are phased towards the centre of field, but not the centre of its given beam. This utility reads the appropriate offsets to the beam centre from the `BEAM_OFFSET` and updates the `FIELD` table, as well as the phase and delay reference columns.
+1. `fix_ms_dir` : ASKAP MeasurementSets are phased towards the centre of field, but not the centre of its given beam. This utility reads the appropriate offsets to the beam centre from the `BEAM_OFFSET` and updates the `FIELD` table, as well as the phase and delay reference columns. An option is also available to restore the `FIELD` table directions to the original directions if `fix_ms_dir` has already been run.
 
 2. `fix_ms_corrs` : ASKAP MeasurementSets, as calibrated by the obervatory, provide correlations in the instrument frame. ASKAP has a unique 'roll' axis which means, in principle, the instrument frame can be at any arbitrary rotation on the sky. This utility applies the appropriate rotation matrix to the visibilities such the 'X' is aligned North-South and 'Y' is aligned East-West (IAU convention). Further, ASKAPsoft defines Stokes I as $I=XX+YY$, whereas most other telescopes use $I=\frac{1}{2}(XX+YY)$ (note this also applies to all other Stokes paramters). This factor is also corrected for here at the same time as the rotation. If you have calibrated with non-ASKAPsoft tools, you may need to use the `--no-fix-stokes-factor` option, which will disable the factor of two correction and just do a rotation.
 
@@ -81,10 +81,11 @@ usage: fix_ms_dir [-h] [ms]
 ASKAP utility - update the pointing centre of a beam in an MS. - Allows imaging by CASA or wsclean.
 
 positional arguments:
-  ms          Measurement set to update (default: None)
+  ms             Measurement set to update (default: None)
 
-optional arguments:
-  -h, --help  show this help message and exit
+options:
+  -h, --help     show this help message and exit
+  -r, --restore  Switch to restore direction to the original ASKAPsoft pipeline direction. (default: False)
   ```
 
 ## Contribution
