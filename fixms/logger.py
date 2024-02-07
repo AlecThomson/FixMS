@@ -144,7 +144,6 @@ def get_fixms_logger(
         logging.Logger: The appropriate logger
     """
     logging.captureWarnings(True)
-    # logger = logging.getLogger(name)
     logger = LoggerWithHistory(name)
     logger.setLevel(logging.WARNING)
 
