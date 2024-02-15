@@ -11,7 +11,12 @@ import re
 import sys
 
 import numpy as np
-from casacore.tables import table, tablecopy, tableexists, taql
+from casacore.tables import (table, 
+                             tablecopy, 
+                             tableexists, 
+                             taql, 
+                             maketabdesc, 
+                             makecoldesc)
 from tqdm import trange
 
 from fixms.logger import TqdmToLogger, logger
@@ -232,23 +237,41 @@ def restore_ms_dir(ms):
     """Restore the direction to the ASKAPsoft standard."""
 
     if tableexists("%s/FIELD_OLD" % (ms)):
+
         logger.info("Restoring FIELD directions in %s" % (ms))
-        tp = table("{}/FIELD".format(ms), readonly=False, ack=False)
-        fp = table("%s/FIELD_OLD" % (ms), readonly=True, ack=False)
-        field_dir = fp.getcol("PHASE_DIR")
-        tp.putcol("PHASE_DIR", field_dir)
-        tp.putcol("DELAY_DIR", field_dir)
-        tp.putcol("REFERENCE_DIR", field_dir)
-        tp.flush()
-        tp.close()
+        with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
+            "%s/FIELD_OLD" % (ms), readonly=True, ack=False
+        ) as fp:
+    
+            field_dir = fp.getcol("PHASE_DIR")
+            tp.putcol("PHASE_DIR", field_dir)
+            tp.putcol("DELAY_DIR", field_dir)
+            tp.putcol("REFERENCE_DIR", field_dir)
+
     else:
         logger.warning(
-            "No `FIELD_OLD` table in %s - cannot restore direction if direction has not changed."
+            "No `FIELD_OLD` table in %s - cannot restore directions if direction has not changed."
+            % (ms)
+        )
+
+    if tableexists("%s/FEED_OLD" % (ms)):
+
+        logger.info("Restoring BEAM_OFFSET in %s" % (ms))
+        with table("%s/FEED" % (ms), readonly=False, ack=False) as tp, table(
+            "%s/FEED_OLD" % (ms), readonly=True, ack=False
+        ) as fp:
+            
+            offset = fp.getcol("BEAM_OFFSET")
+            tp.putcol("BEAM_OFFSET", offset)
+            
+    else:
+        logger.warning(
+            "No `FEED_OLD` table in %s - cannot restore beam offsets if they have not been changed."
             % (ms)
         )
 
 
-def fix_ms_dir(ms):
+def fix_ms_dir(ms, backup_beam_offsets=True):
     logger.info("Fixing FEED directions in %s" % (ms), ms=ms)
     # Check that the observation wasn't in pol_fixed mode
     with table("%s/ANTENNA" % (ms), readonly=True, ack=False) as ta:
@@ -281,6 +304,16 @@ def fix_ms_dir(ms):
 
     # Open up the MS FEED table so we can work out what the offset is for the beam.
     with table("%s/FEED" % (ms), readonly=False, ack=False) as tf:
+
+        # if "BEAM_OFFSET_OLD" not in tf.colnames() and backup_beam_offsets:
+        #     original_offsets = tf.getcol("BEAM_OFFSET")
+        #     cdesc = tf.getcoldesc("BEAM_OFFSET")
+        #     dminfo = tf.getcoldesc("BEAM_OFFSET")
+        #     dminfo["NAME"] = "BEAM_OFFSET_OLD"
+        #     cdesc["comment"] = "The BEAM_OFFSET_OLD column."
+        #     tf.addcols(maketabdesc(makecoldesc("BEAM_OFFSET_OLD", cdesc)), dminfo)
+        #     tf.putcol("BEAM_OFFSET_OLD", original_offsets)
+
         offset = tf.getcol("BEAM_OFFSET")
         offset = offset - offset
         offset = tf.putcol("BEAM_OFFSET", offset)
