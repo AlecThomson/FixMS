@@ -11,12 +11,7 @@ import re
 import sys
 
 import numpy as np
-from casacore.tables import (table, 
-                             tablecopy, 
-                             tableexists, 
-                             taql, 
-                             maketabdesc, 
-                             makecoldesc)
+from casacore.tables import table, tablecopy, tableexists, taql
 from tqdm import trange
 
 from fixms.logger import TqdmToLogger, logger
@@ -304,15 +299,6 @@ def fix_ms_dir(ms, backup_beam_offsets=True):
 
     # Open up the MS FEED table so we can work out what the offset is for the beam.
     with table("%s/FEED" % (ms), readonly=False, ack=False) as tf:
-
-        # if "BEAM_OFFSET_OLD" not in tf.colnames() and backup_beam_offsets:
-        #     original_offsets = tf.getcol("BEAM_OFFSET")
-        #     cdesc = tf.getcoldesc("BEAM_OFFSET")
-        #     dminfo = tf.getcoldesc("BEAM_OFFSET")
-        #     dminfo["NAME"] = "BEAM_OFFSET_OLD"
-        #     cdesc["comment"] = "The BEAM_OFFSET_OLD column."
-        #     tf.addcols(maketabdesc(makecoldesc("BEAM_OFFSET_OLD", cdesc)), dminfo)
-        #     tf.putcol("BEAM_OFFSET_OLD", original_offsets)
 
         offset = tf.getcol("BEAM_OFFSET")
         offset = offset - offset
