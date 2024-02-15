@@ -10,7 +10,7 @@ repos:
         exclude: |
             ^tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms/*$
 -   repo: https://github.com/psf/black
-    rev: 24.1.1
+    rev: 24.2.0
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/isort
