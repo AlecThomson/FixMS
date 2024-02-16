@@ -232,11 +232,10 @@ def restore_ms_dir(ms):
     """Restore the direction to the ASKAPsoft standard."""
 
     if tableexists("%s/FIELD_OLD" % (ms)):
-        logger.info("Restoring FIELD directions in %s" % (ms))
+        logger.info("Restoring FIELD directions in %s" % (ms), ms=ms)
         with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
             "%s/FIELD_OLD" % (ms), readonly=True, ack=False
         ) as fp:
-
             field_dir = fp.getcol("PHASE_DIR")
             tp.putcol("PHASE_DIR", field_dir)
             tp.putcol("DELAY_DIR", field_dir)
@@ -245,27 +244,27 @@ def restore_ms_dir(ms):
     else:
         logger.warning(
             "No `FIELD_OLD` table in %s - cannot restore directions if direction has not changed."
-            % (ms)
+            % (ms),
+            ms=ms,
         )
 
     if tableexists("%s/FEED_OLD" % (ms)):
-
-        logger.info("Restoring BEAM_OFFSET in %s" % (ms))
+        logger.info("Restoring BEAM_OFFSET in %s" % (ms), ms=ms)
         with table("%s/FEED" % (ms), readonly=False, ack=False) as tp, table(
             "%s/FEED_OLD" % (ms), readonly=True, ack=False
         ) as fp:
-
             offset = fp.getcol("BEAM_OFFSET")
             tp.putcol("BEAM_OFFSET", offset)
 
     else:
         logger.warning(
             "No `FEED_OLD` table in %s - cannot restore beam offsets if they have not been changed."
-            % (ms)
+            % (ms),
+            ms=ms,
         )
 
 
-def fix_ms_dir(ms, backup_beam_offsets=True):
+def fix_ms_dir(ms):
     logger.info("Fixing FEED directions in %s" % (ms), ms=ms)
     # Check that the observation wasn't in pol_fixed mode
     with table("%s/ANTENNA" % (ms), readonly=True, ack=False) as ta:
@@ -298,7 +297,6 @@ def fix_ms_dir(ms, backup_beam_offsets=True):
 
     # Open up the MS FEED table so we can work out what the offset is for the beam.
     with table("%s/FEED" % (ms), readonly=False, ack=False) as tf:
-
         offset = tf.getcol("BEAM_OFFSET")
         offset = offset - offset
         offset = tf.putcol("BEAM_OFFSET", offset)
