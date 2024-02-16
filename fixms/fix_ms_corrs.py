@@ -24,6 +24,35 @@ TQDM_OUT = TqdmToLogger(logger, level=logging.INFO)
 logger.setLevel(logging.INFO)
 
 
+def set_pol_axis(ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None) -> None:
+    with table((ms / "FEED").as_posix(), readonly=True, ack=False) as tf:
+        ms_feed = tf.getcol("RECEPTOR_ANGLE") * u.rad
+        # PAF is at 45deg to feeds
+        # 45 - feed_angle = pol_angle
+        pol_axes = -(ms_feed - 45.0 * u.deg)
+
+    if feed_idx is None:
+        assert (ms_feed[:, 0] == ms_feed[0, 0]).all() & (
+            ms_feed[:, 1] == ms_feed[0, 1]
+        ).all(), "The RECEPTOR_ANGLE changes with time, please check the MS"
+
+        old_pol_ang = pol_axes[0, 0].to(u.deg)
+    else:
+        logger.debug(f"Extracting the third-axis orientation for {feed_idx=}")
+        old_pol_ang = pol_axes[feed_idx, 0].to(u.deg)
+
+    assert old_pol_ang == pol_ang, "Updated pol angle does not match the original!"
+
+    pol_axes_cor = pol_axes - pol_ang
+    # PAF is at 45deg to feeds
+    # 45 - feed_angle = pol_angle
+    # -> feed_angle = 45 - pol_angle
+    new_ms_feed = -(pol_axes_cor - 45.0 * u.deg)
+    with table((ms / "FEED").as_posix(), readonly=False, ack=False) as tf:
+        tf.putcol("RECEPTOR_ANGLE", new_ms_feed.to(u.rad).value)
+        tf.flush()
+
+
 def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     """Get the polarization axis from the ASKAP MS. Checks are performed
     to ensure this polarisation axis angle is constant throughout the observation.
@@ -398,6 +427,19 @@ def fix_ms_corrs(
         ms=ms,
         app_params=_function_args,
     )
+    logger.info(
+        f"Updating the FEED table by a rotation of {pol_axis}",
+        ms=ms,
+        app_params=_function_args,
+    )
+    set_pol_axis(ms, pol_axis, feed_idx=feed_idx)
+    logger.info(
+        f"Updated the RECEPTOR_ANGLE column with a rotation of {pol_axis}",
+        ms=ms.as_posix(),
+        app_params=_function_args,
+    )
+
+    logger.info("Done!")
 
 
 def cli():

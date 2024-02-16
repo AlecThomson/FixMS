@@ -232,7 +232,7 @@ def restore_ms_dir(ms):
     """Restore the direction to the ASKAPsoft standard."""
 
     if tableexists("%s/FIELD_OLD" % (ms)):
-        logger.info("Restoring FIELD directions in %s" % (ms))
+        logger.info("Restoring FIELD directions in %s" % (ms), ms=ms)
         tp = table("{}/FIELD".format(ms), readonly=False, ack=False)
         fp = table("%s/FIELD_OLD" % (ms), readonly=True, ack=False)
         field_dir = fp.getcol("PHASE_DIR")
@@ -244,7 +244,8 @@ def restore_ms_dir(ms):
     else:
         logger.warning(
             "No `FIELD_OLD` table in %s - cannot restore direction if direction has not changed."
-            % (ms)
+            % (ms),
+            ms=ms,
         )
 
 
