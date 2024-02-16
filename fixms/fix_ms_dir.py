@@ -237,7 +237,7 @@ def restore_ms_dir(ms):
         with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
             "%s/FIELD_OLD" % (ms), readonly=True, ack=False
         ) as fp:
-    
+
             field_dir = fp.getcol("PHASE_DIR")
             tp.putcol("PHASE_DIR", field_dir)
             tp.putcol("DELAY_DIR", field_dir)
@@ -255,10 +255,10 @@ def restore_ms_dir(ms):
         with table("%s/FEED" % (ms), readonly=False, ack=False) as tp, table(
             "%s/FEED_OLD" % (ms), readonly=True, ack=False
         ) as fp:
-            
+
             offset = fp.getcol("BEAM_OFFSET")
             tp.putcol("BEAM_OFFSET", offset)
-            
+
     else:
         logger.warning(
             "No `FEED_OLD` table in %s - cannot restore beam offsets if they have not been changed."
