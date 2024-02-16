@@ -430,6 +430,15 @@ def fix_ms_corrs(
     pol_axis = get_pol_axis(ms, feed_idx=feed_idx)
     logger.info(f"Polarization axis is {pol_axis}", ms=ms, app_params=_function_args)
 
+    # Check for pol_axis = 0deg - no correction needed
+    if pol_axis == 0 * u.deg and not fix_stokes_factor:
+        logger.critical(
+            f"Pol axis is 0deg. No correction needed. Exiting...",
+            ms=ms,
+            app_params=_function_args,
+        )
+        return
+
     # Get the data chunk by chunk and convert the correlations
     # then write them back to the MS in the 'data_column' column
     data_chunks = get_data_chunk(ms, chunksize, data_column=data_column)
