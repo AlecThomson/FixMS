@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "fixms"
-version = "0.2.3"
+version = "0.2.4"
 description = ""
 authors = ["Alec Thomson (S&A, Kensington WA) <alec.thomson@csiro.au>"]
 readme = "README.md"
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8"
 numpy = "<1.26"
-astropy = "^5"
+astropy = ">=5"
 python-casacore = "*"
 tqdm = "*"
 
@@ -18,8 +18,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
-isort = "^5.12.0"
-black = "^23.3.0"
+isort = ">=5.12.0"
+black = ">=23.3.0"
 sphinx = "*"
 numpydoc = "*"
 myst_parser = "*"
