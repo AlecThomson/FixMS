@@ -31,6 +31,12 @@ def set_pol_axis(ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None) 
         # 45 - feed_angle = pol_angle
         pol_axes = -(ms_feed - 45.0 * u.deg)
 
+    # Backup the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE
+    with table((ms / "FEED").as_posix(), readonly=False, ack=False) as tf:
+        tf.putcol("INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value)
+        tf.flush()
+    logger.info("Backed up the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE")
+
     if feed_idx is None:
         assert (ms_feed[:, 0] == ms_feed[0, 0]).all() & (
             ms_feed[:, 1] == ms_feed[0, 1]
