@@ -33,6 +33,10 @@ def set_pol_axis(ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None) 
 
     # Backup the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE
     with table((ms / "FEED").as_posix(), readonly=False, ack=False) as tf:
+        coldesc = makecoldesc(
+            "INSTRUMENT_RECEPTOR_ANGLE", tf.getcoldesc("RECEPTOR_ANGLE")
+        )
+        tf.addcols(coldesc)
         tf.putcol("INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value)
         tf.flush()
     logger.info("Backed up the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE")
