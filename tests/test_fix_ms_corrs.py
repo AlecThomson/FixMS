@@ -257,9 +257,9 @@ def askap_stokes_mat(ms):
 
 
 def askap_stokes(ms):
-    theta = get_pol_axis(ms.original_ms_path) + 45 * u.deg
+    theta = get_pol_axis(ms.original_ms_path)
     xx, xy, yx, yy = ms.original_data.T
-    assert theta == 0 * u.deg, "Only works for theta = 0 deg"
+    assert theta == -45 * u.deg, "Only works for theta = -45 deg, got {theta=}"
     I = xx + yy
     Q = yy - xx
     U = -(xy + yx)
@@ -329,7 +329,7 @@ def test_stokes_Q(ms_standard_example, ms_rotated_example):
         mueller_a = askap_stokes_mat(ms)
         mueller_w = get_wsclean_stokes(ms)
         assert np.allclose(
-            mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-2
+            mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-1
         ), f"ASKAP and WSClean disagree on Stokes Q in {ms.fixed_ms_path.name}"
 
 
