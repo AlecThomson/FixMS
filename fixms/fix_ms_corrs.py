@@ -63,7 +63,9 @@ def set_pol_axis(ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None) 
         tf.flush()
 
 
-def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
+def get_pol_axis(
+    ms: Path, feed_idx: Optional[int] = None, col="RECEPTOR_ANGLE"
+) -> u.Quantity:
     """Get the polarization axis from the ASKAP MS. Checks are performed
     to ensure this polarisation axis angle is constant throughout the observation.
 
@@ -78,8 +80,12 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     Returns:
         astropy.units.Quantity: The rotation of the PAF throughout the observing.
     """
+    _known_cols = ("RECEPTOR_ANGLE", "INSTRUMENT_RECEPTOR_ANGLE")
+    if col not in _known_cols:
+        raise ValueError(f"Unknown column {col=}, please use one of {_known_cols}")
+
     with table((ms / "FEED").as_posix(), readonly=True, ack=False) as tf:
-        ms_feed = tf.getcol("RECEPTOR_ANGLE") * u.rad
+        ms_feed = tf.getcol(col) * u.rad
         # PAF is at 45deg to feeds
         # 45 - feed_angle = pol_angle
         pol_axes = -(ms_feed - 45.0 * u.deg)
@@ -87,12 +93,12 @@ def get_pol_axis(ms: Path, feed_idx: Optional[int] = None) -> u.Quantity:
     if feed_idx is None:
         assert (ms_feed[:, 0] == ms_feed[0, 0]).all() & (
             ms_feed[:, 1] == ms_feed[0, 1]
-        ).all(), "The RECEPTOR_ANGLE changes with time, please check the MS"
+        ).all(), f"The {col} changes with time, please check the MS"
 
-        pol_ang = pol_axes[0, 0].to(u.deg)
-    else:
-        logger.debug(f"Extracting the third-axis orientation for {feed_idx=}")
-        pol_ang = pol_axes[feed_idx, 0].to(u.deg)
+        feed_idx = 0
+
+    logger.debug(f"Extracting the third-axis orientation for {feed_idx=}")
+    pol_ang = pol_axes[feed_idx, 0].to(u.deg)
 
     return pol_ang
 
