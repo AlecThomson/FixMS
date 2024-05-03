@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest black
+        pip install pytest black pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
     - name: Test with pytest
