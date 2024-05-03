@@ -167,57 +167,56 @@ def ms_standard_example(tmpdir) -> ExampleData:
     )
 
 
-def test_get_pol_axis(ms_standard_example):
+def test_get_pol_axis(ms_standard_example, ms_rotated_example):
     # Test that the pol axis is correct
-    pol_axis_original = get_pol_axis(
-        ms_standard_example.original_ms_path, col="RECEPTOR_ANGLE"
-    )
-    pol_axis_fixed = get_pol_axis(
-        ms_standard_example.fixed_ms_path, col="INSTRUMENT_RECEPTOR_ANGLE"
-    )
-    rot_pol_axis_fixed = get_pol_axis(
-        ms_standard_example.fixed_ms_path, col="RECEPTOR_ANGLE"
-    )
+    for ms in (ms_standard_example, ms_rotated_example):
+        pol_axis_original = get_pol_axis(ms.original_ms_path, col="RECEPTOR_ANGLE")
+        pol_axis_fixed = get_pol_axis(ms.fixed_ms_path, col="INSTRUMENT_RECEPTOR_ANGLE")
+        rot_pol_axis_fixed = get_pol_axis(ms.fixed_ms_path, col="RECEPTOR_ANGLE")
 
-    assert np.isclose(
-        pol_axis_original, ms_standard_example.pol_axis
-    ), f"Pol axis is incorrect {pol_axis_original=}"
-    assert np.isclose(
-        pol_axis_fixed, ms_standard_example.pol_axis
-    ), f"Pol axis is incorrect {pol_axis_fixed=}"
-    assert np.isclose(
-        rot_pol_axis_fixed, 0 * u.deg
-    ), f"Pol axis is incorrect {rot_pol_axis_fixed=}"
+        assert np.isclose(
+            pol_axis_original, ms.pol_axis
+        ), f"Pol axis is incorrect {pol_axis_original=}"
+        assert np.isclose(
+            pol_axis_fixed, ms.pol_axis
+        ), f"Pol axis is incorrect {pol_axis_fixed=}"
+        assert np.isclose(
+            rot_pol_axis_fixed, 0 * u.deg
+        ), f"Pol axis is incorrect {rot_pol_axis_fixed=}"
 
 
-def test_column_exists(ms_standard_example):
+def test_column_exists(ms_standard_example, ms_rotated_example):
     # Check that CORRECTED_DATA is on disk
-    with table(ms_standard_example.fixed_ms_path.as_posix()) as tab:
-        assert (
-            ms_standard_example.corrected_data_column in tab.colnames()
-        ), f"{ms_standard_example.corrected_data_column} not in MS"
+    for ms in (ms_standard_example, ms_rotated_example):
+        with table(ms.fixed_ms_path.as_posix()) as tab:
+            assert (
+                ms.corrected_data_column in tab.colnames()
+            ), f"{ms.corrected_data_column} not in MS"
 
 
-def test_original_data(ms_standard_example):
+def test_original_data(ms_standard_example, ms_rotated_example):
     # Check that the read-only data is unchanged
-    assert np.allclose(
-        ms_standard_example.original_data, ms_standard_example.fixed_data
-    ), f"{ms_standard_example.data_column} changed"
+    for ms in (ms_standard_example, ms_rotated_example):
+        with table(ms.fixed_ms_path.as_posix(), readonly=True) as tab:
+            fixed_data = tab.getcol(ms.data_column)
+
+        assert np.allclose(ms.original_data, fixed_data), f"{ms.data_column} changed"
 
 
-def test_corrected_data(ms_standard_example):
-    # Get the receptor angle
-    ang = get_pol_axis(ms_standard_example.original_ms_path)
-    # Check the conversion as written to disk
-    assert np.allclose(
-        convert_correlations(ms_standard_example.original_data, ang),
-        ms_standard_example.fixed_corrected_data,
-    ), "Data write failed"
+def test_corrected_data(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        # Get the receptor angle
+        ang = get_pol_axis(ms.original_ms_path)
+        # Check the conversion as written to disk
+        assert np.allclose(
+            convert_correlations(ms.original_data, ang),
+            ms.fixed_corrected_data,
+        ), "Data write failed"
 
 
-def askap_stokes_mat(ms_standard_example):
-    theta = get_pol_axis(ms_standard_example.original_ms_path) + 45 * u.deg
-    xx, xy, yx, yy = ms_standard_example.original_data.T
+def askap_stokes_mat(ms):
+    theta = get_pol_axis(ms.original_ms_path) + 45 * u.deg
+    xx, xy, yx, yy = ms.original_data.T
     correlations = np.array([xx, xy, yx, yy])
     logger.debug(f"{correlations.shape=}")
     # Equation D.1 from ASKAP Observation Guide
@@ -245,9 +244,9 @@ def askap_stokes_mat(ms_standard_example):
     return Mueller(I, Q, U, V)
 
 
-def askap_stokes(ms_standard_example):
-    theta = get_pol_axis(ms_standard_example.original_ms_path) + 45 * u.deg
-    xx, xy, yx, yy = ms_standard_example.original_data.T
+def askap_stokes(ms):
+    theta = get_pol_axis(ms.original_ms_path) + 45 * u.deg
+    xx, xy, yx, yy = ms.original_data.T
     assert theta == 0 * u.deg, "Only works for theta = 0 deg"
     I = xx + yy
     Q = xy + yx
@@ -257,13 +256,13 @@ def askap_stokes(ms_standard_example):
     return Mueller(I, Q, U, V)
 
 
-def get_wsclean_stokes(ms_standard_example):
+def get_wsclean_stokes(ms):
     # from https://gitlab.com/aroffringa/aocommon/-/blob/master/include/aocommon/polarization.h
     # *   XX = I + Q  ;   I = (XX + YY)/2
     # *   XY = U + iV ;   Q = (XX - YY)/2
     # *   YX = U - iV ;   U = (XY + YX)/2
     # *   YY = I - Q  ;   V = -i(XY - YX)/2
-    xx, xy, yx, yy = ms_standard_example.fixed_corrected_data.T
+    xx, xy, yx, yy = ms.fixed_corrected_data.T
     I = 0.5 * (xx + yy)
     Q = 0.5 * (xx - yy)
     U = 0.5 * (xy + yx)
@@ -304,33 +303,37 @@ def test_rotated_data_V(ms_standard_example):
     ), "Stokes rotation V failed"
 
 
-def test_stokes_I(ms_standard_example):
-    mueller_a = askap_stokes_mat(ms_standard_example)
-    mueller_w = get_wsclean_stokes(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4
-    ), "ASKAP and WSClean disagree on Stokes I"
+def test_stokes_I(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        mueller_a = askap_stokes_mat(ms)
+        mueller_w = get_wsclean_stokes(ms)
+        assert np.allclose(
+            mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes I"
 
 
-def test_stokes_Q(ms_standard_example):
-    mueller_a = askap_stokes_mat(ms_standard_example)
-    mueller_w = get_wsclean_stokes(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-2
-    ), "ASKAP and WSClean disagree on Stokes Q"
+def test_stokes_Q(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        mueller_a = askap_stokes_mat(ms)
+        mueller_w = get_wsclean_stokes(ms)
+        assert np.allclose(
+            mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-2
+        ), "ASKAP and WSClean disagree on Stokes Q"
 
 
-def test_stokes_U(ms_standard_example):
-    mueller_a = askap_stokes_mat(ms_standard_example)
-    mueller_w = get_wsclean_stokes(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4
-    ), "ASKAP and WSClean disagree on Stokes U"
+def test_stokes_U(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        mueller_a = askap_stokes_mat(ms)
+        mueller_w = get_wsclean_stokes(ms)
+        assert np.allclose(
+            mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes U"
 
 
-def test_stokes_V(ms_standard_example):
-    mueller_a = askap_stokes_mat(ms_standard_example)
-    mueller_w = get_wsclean_stokes(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4
-    ), "ASKAP and WSClean disagree on Stokes V"
+def test_stokes_V(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        mueller_a = askap_stokes_mat(ms)
+        mueller_w = get_wsclean_stokes(ms)
+        assert np.allclose(
+            mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4
+        ), "ASKAP and WSClean disagree on Stokes V"
