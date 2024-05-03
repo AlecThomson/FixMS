@@ -64,7 +64,7 @@ def get_packaged_resource_path(package: str, filename: str) -> Path:
     """
     logger.info(f"Loading {package=} for {filename=}")
 
-    with importlib_resources.path(package) as p:
+    with importlib_resources.path(package, "") as p:
         full_path = Path(p) / filename
 
     logger.debug(f"Resolved {full_path=}")
