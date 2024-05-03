@@ -163,3 +163,4 @@ cython_debug/
 tests/test.ms
 
 .DS_Store
+*.ms
