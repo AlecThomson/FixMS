@@ -4,11 +4,10 @@
 Test the fixing the MS correlations
 """
 try:
-    import importlib_resources as importlib_resources
-except Exception as e:
-    from importlib import resources as importlib_resources
-
-import importlib
+    # Python < 3.9
+    import importlib_resources as resources
+except ImportError:
+    import importlib.resources as resources
 import logging
 import shutil
 import unittest
@@ -64,8 +63,8 @@ def get_packaged_resource_path(package: str, filename: str) -> Path:
     """
     logger.info(f"Loading {package=} for {filename=}")
 
-    with importlib_resources.path(package, "") as p:
-        full_path = Path(p) / filename
+    dir_path = resources.files(package)
+    full_path = dir_path / filename
 
     logger.debug(f"Resolved {full_path=}")
 
