@@ -5,7 +5,7 @@ Test the fixing the MS correlations
 """
 try:
     import importlib_resources as importlib_resources
-except ImportWarning:
+except Exception as e:
     from importlib import resources as importlib_resources
 
 import importlib
