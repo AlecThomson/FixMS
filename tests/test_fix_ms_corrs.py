@@ -3,6 +3,12 @@
 """
 Test the fixing the MS correlations
 """
+try:
+    import importlib_resources as importlib_resources
+except ImportWarning:
+    from importlib import resources as importlib_resources
+
+import importlib
 import logging
 import shutil
 import unittest
@@ -11,6 +17,7 @@ from typing import NamedTuple
 
 import astropy.units as u
 import numpy as np
+import pytest
 from casacore.tables import table
 
 from fixms.fix_ms_corrs import convert_correlations, fix_ms_corrs, get_pol_axis
@@ -20,189 +27,310 @@ logger.setLevel(logging.DEBUG)
 
 
 class Mueller(NamedTuple):
-    I: np.ndarray
-    Q: np.ndarray
-    U: np.ndarray
-    V: np.ndarray
+    stokes_I: np.ndarray
+    stokes_Q: np.ndarray
+    stokes_U: np.ndarray
+    stokes_V: np.ndarray
 
 
-class Tester(unittest.TestCase):
-    # def __init__(self):
-    def setUp(self) -> None:
-        # Copy the read-only MS file to a temporary file
-        self.read_only_ms = Path(
-            "tests/scienceData.RACS_0012+00.SB45305.RACS_0012+00.beam00_averaged_cal.leakage.ms"
+class ExampleData(NamedTuple):
+    original_ms_path: Path
+    fixed_ms_path: Path
+    data_column: str
+    corrected_data_column: str
+    pol_axis: u.Quantity
+    original_data: np.ndarray
+    fixed_data: np.ndarray
+    fixed_corrected_data: np.ndarray
+
+
+def get_packaged_resource_path(package: str, filename: str) -> Path:
+    """Load in the path of a package sources.
+
+    The `package` argument is passed as a though the module
+    is being speficied as an import statement.
+
+    Args:
+        package (str): The module path to the resources
+        filename (str): Filename of the datafile to load
+
+    Returns:
+        Path: The absolute path to the packaged resource file
+    """
+    logger.info(f"Loading {package=} for {filename=}")
+
+    with importlib_resources.files(package) as p:
+        full_path = Path(p) / filename
+
+    logger.debug(f"Resolved {full_path=}")
+
+    return full_path
+
+
+@pytest.fixture
+def ms_rotated_example(tmpdir) -> ExampleData:
+    ms_zip = Path(
+        get_packaged_resource_path(
+            package="fixms.data",
+            filename="RACS_1313-72.SB57526.split.ms.zip",
         )
-        self.ms = Path("tests/test.ms")
-        # Copy the read-only MS file to a temporary file
-        logger.info(f"Copying {self.read_only_ms} to {self.ms}")
-        shutil.copytree(self.read_only_ms, self.ms, dirs_exist_ok=True)
-        # Allow writing to the MS file
-        self.data_column = "DATA"
-        self.corrected_data_column = "CORRECTED_DATA"
-        self.pol_axis = -45 * u.deg
+    )
+    outpath = Path(tmpdir) / "standard"
 
-        # Run the fix
-        logger.info(f"Running fix_ms_corrs on {self.ms}")
-        fix_ms_corrs(
-            self.ms,
-            data_column=self.data_column,
-            corrected_data_column=self.corrected_data_column,
+    shutil.unpack_archive(ms_zip, outpath)
+
+    original_ms_path = Path(outpath) / "RACS_1313-72.SB57526.split.ms"
+    fixed_ms_path = Path(outpath) / "RACS_1313-72.SB57526.split.fixed.ms"
+    shutil.copytree(original_ms_path, fixed_ms_path)
+
+    data_column = "DATA"
+    corrected_data_column = "CORRECTED_DATA"
+    # From OMP - common.target.src1.pol_axis = [pa_fixed, 115.859]
+    pol_axis = 115.859 * u.deg
+
+    # Run the fix
+    logger.info(f"Running fix_ms_corrs on {fixed_ms_path}")
+    fix_ms_corrs(
+        fixed_ms_path,
+        data_column=data_column,
+        corrected_data_column=corrected_data_column,
+    )
+
+    with table(original_ms_path.as_posix(), readonly=True) as tab:
+        original_data = tab.getcol(data_column)
+
+    with table(fixed_ms_path.as_posix(), readonly=True) as tab:
+        fixed_data = tab.getcol(data_column)
+        fixed_corrected_data = tab.getcol(corrected_data_column)
+
+    logger.debug(f"{fixed_data.shape=}")
+
+    return ExampleData(
+        original_ms_path=original_ms_path,
+        fixed_ms_path=fixed_ms_path,
+        data_column=data_column,
+        corrected_data_column=corrected_data_column,
+        pol_axis=pol_axis,
+        original_data=original_data,
+        fixed_data=fixed_data,
+        fixed_corrected_data=fixed_corrected_data,
+    )
+
+
+@pytest.fixture
+def ms_standard_example(tmpdir) -> ExampleData:
+    ms_zip = Path(
+        get_packaged_resource_path(
+            package="fixms.data",
+            filename="SB60933.RACS_1727+37.split.ms.zip",
         )
+    )
+    outpath = Path(tmpdir) / "standard"
 
-        # Find first row with good data
-        with table(self.ms.as_posix(), readonly=True) as tab:
-            idx = 0
-            data = tab.__getattr__(self.data_column).getcell(idx)
-            cor_data = tab.__getattr__(self.corrected_data_column).getcell(idx)
-            while (data == 0 + 0j).all():
-                idx += 1
-                data = tab.__getattr__(self.data_column).getcell(idx)
-                cor_data = tab.__getattr__(self.corrected_data_column).getcell(idx)
+    shutil.unpack_archive(ms_zip, outpath)
 
-        self.data = data
-        self.cor_data = cor_data
+    original_ms_path = Path(outpath) / "SB60933.RACS_1727+37.split.ms"
+    fixed_ms_path = Path(outpath) / "SB60933.RACS_1727+37.split.fixed.ms"
+    shutil.copytree(original_ms_path, fixed_ms_path)
 
-        # Get the read-only data
-        with table(self.read_only_ms.as_posix(), readonly=True) as tab:
-            data = tab.__getattr__(self.data_column).getcell(idx)
-        self.read_only_data = data
+    data_column = "DATA"
+    corrected_data_column = "CORRECTED_DATA"
+    # From OMP - common.target.src1.pol_axis = [pa_fixed, -45]
+    pol_axis = -45 * u.deg
 
-    def test_get_pol_axis(self):
-        # Test that the pol axis is correct
-        pol_axis = get_pol_axis(self.ms)
-        assert pol_axis == self.pol_axis
+    # Run the fix
+    logger.info(f"Running fix_ms_corrs on {fixed_ms_path}")
+    fix_ms_corrs(
+        fixed_ms_path,
+        data_column=data_column,
+        corrected_data_column=corrected_data_column,
+    )
 
-    def test_column_exists(self):
-        # Check that CORRECTED_DATA is on disk
-        with table(self.ms.as_posix()) as tab:
-            assert (
-                self.corrected_data_column in tab.colnames()
-            ), f"{self.corrected_data_column} not in MS"
+    with table(original_ms_path.as_posix(), readonly=True) as tab:
+        original_data = tab.getcol(data_column)
 
-    def test_read_only_data(self):
-        # Check that the read-only data is unchanged
-        assert np.allclose(
-            self.read_only_data, self.data
-        ), f"{self.data_column} changed"
+    with table(fixed_ms_path.as_posix(), readonly=True) as tab:
+        fixed_data = tab.getcol(data_column)
+        fixed_corrected_data = tab.getcol(corrected_data_column)
 
-    def test_corrected_data(self):
-        # Get the receptor angle
-        ang = get_pol_axis(self.ms)
+    logger.debug(f"{fixed_data.shape=}")
 
-        # Check the conversion as written to disk
-        assert np.allclose(
-            convert_correlations(self.data, ang), self.cor_data
-        ), "Data write failed"
+    return ExampleData(
+        original_ms_path=original_ms_path,
+        fixed_ms_path=fixed_ms_path,
+        data_column=data_column,
+        corrected_data_column=corrected_data_column,
+        pol_axis=pol_axis,
+        original_data=original_data,
+        fixed_data=fixed_data,
+        fixed_corrected_data=fixed_corrected_data,
+    )
 
-    def askap_stokes_mat(self):
-        theta = get_pol_axis(self.ms) + 45 * u.deg
-        xx, xy, yx, yy = self.data.T
-        correlations = np.array([xx, xy, yx, yy])
-        # Equation D.1 from ASKAP Observation Guide
-        rot = np.array(
+
+def test_get_pol_axis(ms_standard_example):
+    # Test that the pol axis is correct
+    pol_axis_original = get_pol_axis(
+        ms_standard_example.original_ms_path, col="RECEPTOR_ANGLE"
+    )
+    pol_axis_fixed = get_pol_axis(
+        ms_standard_example.fixed_ms_path, col="INSTRUMENT_RECEPTOR_ANGLE"
+    )
+    rot_pol_axis_fixed = get_pol_axis(
+        ms_standard_example.fixed_ms_path, col="RECEPTOR_ANGLE"
+    )
+
+    assert np.isclose(
+        pol_axis_original, ms_standard_example.pol_axis
+    ), f"Pol axis is incorrect {pol_axis_original=}"
+    assert np.isclose(
+        pol_axis_fixed, ms_standard_example.pol_axis
+    ), f"Pol axis is incorrect {pol_axis_fixed=}"
+    assert np.isclose(
+        rot_pol_axis_fixed, 0 * u.deg
+    ), f"Pol axis is incorrect {rot_pol_axis_fixed=}"
+
+
+def test_column_exists(ms_standard_example):
+    # Check that CORRECTED_DATA is on disk
+    with table(ms_standard_example.fixed_ms_path.as_posix()) as tab:
+        assert (
+            ms_standard_example.corrected_data_column in tab.colnames()
+        ), f"{ms_standard_example.corrected_data_column} not in MS"
+
+
+def test_original_data(ms_standard_example):
+    # Check that the read-only data is unchanged
+    assert np.allclose(
+        ms_standard_example.original_data, ms_standard_example.fixed_data
+    ), f"{ms_standard_example.data_column} changed"
+
+
+def test_corrected_data(ms_standard_example):
+    # Get the receptor angle
+    ang = get_pol_axis(ms_standard_example.original_ms_path)
+    # Check the conversion as written to disk
+    assert np.allclose(
+        convert_correlations(ms_standard_example.original_data, ang),
+        ms_standard_example.fixed_corrected_data,
+    ), "Data write failed"
+
+
+def askap_stokes_mat(ms_standard_example):
+    theta = get_pol_axis(ms_standard_example.original_ms_path) + 45 * u.deg
+    xx, xy, yx, yy = ms_standard_example.original_data.T
+    correlations = np.array([xx, xy, yx, yy])
+    logger.debug(f"{correlations.shape=}")
+    # Equation D.1 from ASKAP Observation Guide
+    rot = np.array(
+        [
+            [1, 0, 0, 1],
             [
-                [1, 0, 0, 1],
-                [
-                    np.sin(2 * theta),
-                    np.cos(2 * theta),
-                    np.cos(2 * theta),
-                    -np.sin(2 * theta),
-                ],
-                [
-                    -np.cos(2 * theta),
-                    np.sin(2 * theta),
-                    np.sin(2 * theta),
-                    np.cos(2 * theta),
-                ],
-                [0, -1j, 1j, 0],
-            ]
-        )
-        I, Q, U, V = rot @ correlations
-        return Mueller(I, Q, U, V)
+                np.sin(2 * theta),
+                np.cos(2 * theta),
+                np.cos(2 * theta),
+                -np.sin(2 * theta),
+            ],
+            [
+                -np.cos(2 * theta),
+                np.sin(2 * theta),
+                np.sin(2 * theta),
+                np.cos(2 * theta),
+            ],
+            [0, -1j, 1j, 0],
+        ]
+    )
+    logger.debug(f"{rot.shape=}")
+    # I, Q, U, V = rot @ correlations
+    I, Q, U, V = np.einsum("ij,j...->i...", rot, correlations)
+    return Mueller(I, Q, U, V)
 
-    def askap_stokes(self):
-        theta = get_pol_axis(self.ms) + 45 * u.deg
-        xx, xy, yx, yy = self.data.T
-        assert theta == 0 * u.deg, "Only works for theta = 0 deg"
-        I = xx + yy
-        Q = xy + yx
-        U = yy - xx
-        V = 1j * (yx - xy)
 
-        return Mueller(I, Q, U, V)
+def askap_stokes(ms_standard_example):
+    theta = get_pol_axis(ms_standard_example.original_ms_path) + 45 * u.deg
+    xx, xy, yx, yy = ms_standard_example.original_data.T
+    assert theta == 0 * u.deg, "Only works for theta = 0 deg"
+    I = xx + yy
+    Q = xy + yx
+    U = yy - xx
+    V = 1j * (yx - xy)
 
-    def get_wsclean_stokes(self):
-        # from https://gitlab.com/aroffringa/aocommon/-/blob/master/include/aocommon/polarization.h
-        # *   XX = I + Q  ;   I = (XX + YY)/2
-        # *   XY = U + iV ;   Q = (XX - YY)/2
-        # *   YX = U - iV ;   U = (XY + YX)/2
-        # *   YY = I - Q  ;   V = -i(XY - YX)/2
-        xx, xy, yx, yy = self.cor_data.T
-        I = 0.5 * (xx + yy)
-        Q = 0.5 * (xx - yy)
-        U = 0.5 * (xy + yx)
-        V = -0.5j * (xy - yx)
+    return Mueller(I, Q, U, V)
 
-        return Mueller(I, Q, U, V)
 
-    def test_rotated_data_I(self):
-        mueller_a = self.askap_stokes()
-        mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(
-            mueller_a.I, mueller_a_mat.I, atol=1e-4
-        ), "Stokes rotation I failed"
+def get_wsclean_stokes(ms_standard_example):
+    # from https://gitlab.com/aroffringa/aocommon/-/blob/master/include/aocommon/polarization.h
+    # *   XX = I + Q  ;   I = (XX + YY)/2
+    # *   XY = U + iV ;   Q = (XX - YY)/2
+    # *   YX = U - iV ;   U = (XY + YX)/2
+    # *   YY = I - Q  ;   V = -i(XY - YX)/2
+    xx, xy, yx, yy = ms_standard_example.fixed_corrected_data.T
+    I = 0.5 * (xx + yy)
+    Q = 0.5 * (xx - yy)
+    U = 0.5 * (xy + yx)
+    V = -0.5j * (xy - yx)
 
-    def test_rotated_data_Q(self):
-        mueller_a = self.askap_stokes()
-        mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(
-            mueller_a.Q, mueller_a_mat.Q, atol=1e-4
-        ), "Stokes rotation Q failed"
+    return Mueller(I, Q, U, V)
 
-    def test_rotated_data_U(self):
-        mueller_a = self.askap_stokes()
-        mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(
-            mueller_a.U, mueller_a_mat.U, atol=1e-4
-        ), "Stokes rotation U failed"
 
-    def test_rotated_data_V(self):
-        mueller_a = self.askap_stokes()
-        mueller_a_mat = self.askap_stokes_mat()
-        assert np.allclose(
-            mueller_a.V, mueller_a_mat.V, atol=1e-4
-        ), "Stokes rotation V failed"
+def test_rotated_data_I(ms_standard_example):
+    mueller_a = askap_stokes(ms_standard_example)
+    mueller_a_mat = askap_stokes_mat(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_I, mueller_a_mat.stokes_I, atol=1e-4
+    ), "Stokes rotation I failed"
 
-    def test_stokes_I(self):
-        mueller_a = self.askap_stokes_mat()
-        mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(
-            mueller_a.I, mueller_w.I, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes I"
 
-    def test_stokes_Q(self):
-        mueller_a = self.askap_stokes_mat()
-        mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(
-            mueller_a.Q, mueller_w.Q, atol=1e-2
-        ), "ASKAP and WSClean disagree on Stokes Q"
+def test_rotated_data_Q(ms_standard_example):
+    mueller_a = askap_stokes(ms_standard_example)
+    mueller_a_mat = askap_stokes_mat(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_Q, mueller_a_mat.stokes_Q, atol=1e-4
+    ), "Stokes rotation Q failed"
 
-    def test_stokes_U(self):
-        mueller_a = self.askap_stokes_mat()
-        mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(
-            mueller_a.U, mueller_w.U, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes U"
 
-    def test_stokes_V(self):
-        mueller_a = self.askap_stokes_mat()
-        mueller_w = self.get_wsclean_stokes()
-        assert np.allclose(
-            mueller_a.V, mueller_w.V, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes V"
+def test_rotated_data_U(ms_standard_example):
+    mueller_a = askap_stokes(ms_standard_example)
+    mueller_a_mat = askap_stokes_mat(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_U, mueller_a_mat.stokes_U, atol=1e-4
+    ), "Stokes rotation U failed"
 
-    def tearDown(self) -> None:
-        # Remove the temporary MS file
-        logger.info(f"Removing {self.ms}")
-        shutil.rmtree(self.ms)
+
+def test_rotated_data_V(ms_standard_example):
+    mueller_a = askap_stokes(ms_standard_example)
+    mueller_a_mat = askap_stokes_mat(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_V, mueller_a_mat.stokes_V, atol=1e-4
+    ), "Stokes rotation V failed"
+
+
+def test_stokes_I(ms_standard_example):
+    mueller_a = askap_stokes_mat(ms_standard_example)
+    mueller_w = get_wsclean_stokes(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4
+    ), "ASKAP and WSClean disagree on Stokes I"
+
+
+def test_stokes_Q(ms_standard_example):
+    mueller_a = askap_stokes_mat(ms_standard_example)
+    mueller_w = get_wsclean_stokes(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-2
+    ), "ASKAP and WSClean disagree on Stokes Q"
+
+
+def test_stokes_U(ms_standard_example):
+    mueller_a = askap_stokes_mat(ms_standard_example)
+    mueller_w = get_wsclean_stokes(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4
+    ), "ASKAP and WSClean disagree on Stokes U"
+
+
+def test_stokes_V(ms_standard_example):
+    mueller_a = askap_stokes_mat(ms_standard_example)
+    mueller_w = get_wsclean_stokes(ms_standard_example)
+    assert np.allclose(
+        mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4
+    ), "ASKAP and WSClean disagree on Stokes V"
