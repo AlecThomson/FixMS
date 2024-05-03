@@ -20,7 +20,12 @@ import numpy as np
 import pytest
 from casacore.tables import table
 
-from fixms.fix_ms_corrs import convert_correlations, fix_ms_corrs, get_pol_axis
+from fixms.fix_ms_corrs import (
+    check_data,
+    convert_correlations,
+    fix_ms_corrs,
+    get_pol_axis,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -214,8 +219,15 @@ def test_corrected_data(ms_standard_example, ms_rotated_example):
         ), "Data write failed"
 
 
+def test_check_data(ms_standard_example, ms_rotated_example):
+    for ms in (ms_standard_example, ms_rotated_example):
+        assert not check_data(
+            ms.fixed_ms_path, ms.data_column, ms.corrected_data_column
+        ), f"Corrected data column is incorrect in {ms.fixed_ms_path.name}"
+
+
 def askap_stokes_mat(ms):
-    theta = get_pol_axis(ms.original_ms_path) + 45 * u.deg
+    theta = get_pol_axis(ms.original_ms_path)
     xx, xy, yx, yy = ms.original_data.T
     correlations = np.array([xx, xy, yx, yy])
     logger.debug(f"{correlations.shape=}")
@@ -249,8 +261,8 @@ def askap_stokes(ms):
     xx, xy, yx, yy = ms.original_data.T
     assert theta == 0 * u.deg, "Only works for theta = 0 deg"
     I = xx + yy
-    Q = xy + yx
-    U = yy - xx
+    Q = yy - xx
+    U = -(xy + yx)
     V = 1j * (yx - xy)
 
     return Mueller(I, Q, U, V)
@@ -284,7 +296,7 @@ def test_rotated_data_Q(ms_standard_example):
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
     assert np.allclose(
         mueller_a.stokes_Q, mueller_a_mat.stokes_Q, atol=1e-4
-    ), "Stokes rotation Q failed"
+    ), f"Stokes rotation Q failed for {ms_standard_example.fixed_ms_path.name}"
 
 
 def test_rotated_data_U(ms_standard_example):
@@ -292,7 +304,7 @@ def test_rotated_data_U(ms_standard_example):
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
     assert np.allclose(
         mueller_a.stokes_U, mueller_a_mat.stokes_U, atol=1e-4
-    ), "Stokes rotation U failed"
+    ), f"Stokes rotation U failed for {ms_standard_example.fixed_ms_path.name}"
 
 
 def test_rotated_data_V(ms_standard_example):
@@ -300,7 +312,7 @@ def test_rotated_data_V(ms_standard_example):
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
     assert np.allclose(
         mueller_a.stokes_V, mueller_a_mat.stokes_V, atol=1e-4
-    ), "Stokes rotation V failed"
+    ), f"Stokes rotation V failed for {ms_standard_example.fixed_ms_path.name}"
 
 
 def test_stokes_I(ms_standard_example, ms_rotated_example):
@@ -309,7 +321,7 @@ def test_stokes_I(ms_standard_example, ms_rotated_example):
         mueller_w = get_wsclean_stokes(ms)
         assert np.allclose(
             mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes I"
+        ), f"ASKAP and WSClean disagree on Stokes I in {ms.fixed_ms_path.name}"
 
 
 def test_stokes_Q(ms_standard_example, ms_rotated_example):
@@ -318,7 +330,7 @@ def test_stokes_Q(ms_standard_example, ms_rotated_example):
         mueller_w = get_wsclean_stokes(ms)
         assert np.allclose(
             mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-2
-        ), "ASKAP and WSClean disagree on Stokes Q"
+        ), f"ASKAP and WSClean disagree on Stokes Q in {ms.fixed_ms_path.name}"
 
 
 def test_stokes_U(ms_standard_example, ms_rotated_example):
@@ -327,7 +339,7 @@ def test_stokes_U(ms_standard_example, ms_rotated_example):
         mueller_w = get_wsclean_stokes(ms)
         assert np.allclose(
             mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes U"
+        ), f"ASKAP and WSClean disagree on Stokes U in {ms.fixed_ms_path.name}"
 
 
 def test_stokes_V(ms_standard_example, ms_rotated_example):
@@ -336,4 +348,4 @@ def test_stokes_V(ms_standard_example, ms_rotated_example):
         mueller_w = get_wsclean_stokes(ms)
         assert np.allclose(
             mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4
-        ), "ASKAP and WSClean disagree on Stokes V"
+        ), f"ASKAP and WSClean disagree on Stokes V in {ms.fixed_ms_path.name}"
