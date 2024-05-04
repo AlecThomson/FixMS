@@ -109,7 +109,7 @@ def ms_rotated_example(tmpdir) -> ExampleData:
 
     logger.debug(f"{fixed_data.shape=}")
 
-    return ExampleData(
+    yield ExampleData(
         original_ms_path=original_ms_path,
         fixed_ms_path=fixed_ms_path,
         data_column=data_column,
@@ -119,6 +119,10 @@ def ms_rotated_example(tmpdir) -> ExampleData:
         fixed_data=fixed_data,
         fixed_corrected_data=fixed_corrected_data,
     )
+
+    for f in (original_ms_path, fixed_ms_path):
+        if f.exists():
+            shutil.rmtree(f)
 
 
 @pytest.fixture
@@ -159,7 +163,7 @@ def ms_standard_example(tmpdir) -> ExampleData:
 
     logger.debug(f"{fixed_data.shape=}")
 
-    return ExampleData(
+    yield ExampleData(
         original_ms_path=original_ms_path,
         fixed_ms_path=fixed_ms_path,
         data_column=data_column,
@@ -169,6 +173,10 @@ def ms_standard_example(tmpdir) -> ExampleData:
         fixed_data=fixed_data,
         fixed_corrected_data=fixed_corrected_data,
     )
+
+    for f in (original_ms_path, fixed_ms_path):
+        if f.exists():
+            shutil.rmtree(f)
 
 
 def test_get_pol_axis(ms_standard_example, ms_rotated_example):
