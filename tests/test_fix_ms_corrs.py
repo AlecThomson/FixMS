@@ -8,6 +8,8 @@ try:
     import importlib_resources as resources
 except ImportError:
     import importlib.resources as resources
+
+import asyncio
 import logging
 import shutil
 import unittest
@@ -99,7 +101,6 @@ def ms_rotated_example(tmpdir) -> ExampleData:
         data_column=data_column,
         corrected_data_column=corrected_data_column,
     )
-
     with table(original_ms_path.as_posix(), readonly=True) as tab:
         original_data = tab.getcol(data_column)
 
@@ -207,6 +208,7 @@ def test_column_exists(ms_standard_example, ms_rotated_example):
 
 
 def test_original_data(ms_standard_example, ms_rotated_example):
+
     # Check that the read-only data is unchanged
     for ms in (ms_standard_example, ms_rotated_example):
         with table(ms.fixed_ms_path.as_posix(), readonly=True) as tab:
@@ -216,6 +218,7 @@ def test_original_data(ms_standard_example, ms_rotated_example):
 
 
 def test_corrected_data(ms_standard_example, ms_rotated_example):
+
     for ms in (ms_standard_example, ms_rotated_example):
         # Get the receptor angle
         ang = get_pol_axis(ms.original_ms_path)
@@ -227,6 +230,7 @@ def test_corrected_data(ms_standard_example, ms_rotated_example):
 
 
 def test_check_data(ms_standard_example, ms_rotated_example):
+
     for ms in (ms_standard_example, ms_rotated_example):
         assert not check_data(
             ms.fixed_ms_path, ms.data_column, ms.corrected_data_column
