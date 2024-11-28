@@ -1,5 +1,3 @@
-import os
-import sys
 from importlib.metadata import distribution
 
 # Configuration file for the Sphinx documentation builder.

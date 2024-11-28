@@ -8,12 +8,13 @@ This will make them compatible with most imagers (e.g. wsclean, CASA)
 
 The new correlations are placed in a new column called 'CORRECTED_DATA'
 """
+
 __author__ = ["Alec Thomson"]
 
 import asyncio
 import logging
 from pathlib import Path
-from typing import AsyncGenerator, Awaitable, Iterator, Optional
+from typing import AsyncGenerator, Awaitable, Optional
 
 import astropy.units as u
 import numpy as np
@@ -28,9 +29,10 @@ logger.setLevel(logging.INFO)
 
 async def set_pol_axis_coro(
     ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None
-) -> Awaitable[None]:
+) -> Awaitable:
     with table((ms / "FEED").as_posix(), readonly=True, ack=False) as tf:
-        ms_feed = tf.getcol("RECEPTOR_ANGLE") * u.rad
+        ms_feed = await asyncio.to_thread(tf.getcol, "RECEPTOR_ANGLE")
+        ms_feed = ms_feed * u.rad
         # PAF is at 45deg to feeds
         # 45 - feed_angle = pol_angle
         pol_axes = -(ms_feed - 45.0 * u.deg)
@@ -40,9 +42,11 @@ async def set_pol_axis_coro(
         coldesc = makecoldesc(
             "INSTRUMENT_RECEPTOR_ANGLE", tf.getcoldesc("RECEPTOR_ANGLE")
         )
-        tf.addcols(coldesc)
-        tf.putcol("INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value)
-        tf.flush()
+        await asyncio.to_thread(tf.addcols, coldesc)
+        await asyncio.to_thread(
+            tf.putcol, "INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value
+        )
+        await asyncio.to_thread(tf.flush)
     logger.info("Backed up the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE")
 
     if feed_idx is None:
@@ -63,8 +67,10 @@ async def set_pol_axis_coro(
     # -> feed_angle = 45 - pol_angle
     new_ms_feed = -(pol_axes_cor - 45.0 * u.deg)
     with table((ms / "FEED").as_posix(), readonly=False, ack=False) as tf:
-        tf.putcol("RECEPTOR_ANGLE", new_ms_feed.to(u.rad).value)
-        tf.flush()
+        await asyncio.to_thread(
+            tf.putcol, "RECEPTOR_ANGLE", new_ms_feed.to(u.rad).value
+        )
+        await asyncio.to_thread(tf.flush)
 
 
 async def get_pol_axis_coro(
@@ -76,7 +82,7 @@ async def get_pol_axis_coro(
 
     Args:
         ms (Path): The path to the measurement set that will be inspected
-        feed_idx (Optional[int], optional): Specify the entery in the FEED
+        feed_idx (Optional[int], optional): Specify the entry in the FEED
         table of `ms` to return. This might be required when a subset of a
         measurement set has been extracted from an observation with a varying
         orientation.
@@ -89,7 +95,8 @@ async def get_pol_axis_coro(
         raise ValueError(f"Unknown column {col=}, please use one of {_known_cols}")
 
     with table((ms / "FEED").as_posix(), readonly=True, ack=False) as tf:
-        ms_feed = tf.getcol(col) * u.rad
+        ms_feed = await asyncio.to_thread(tf.getcol, col)
+        ms_feed = ms_feed * u.rad
         # PAF is at 45deg to feeds
         # 45 - feed_angle = pol_angle
         pol_axes = -(ms_feed - 45.0 * u.deg)
@@ -116,7 +123,7 @@ def get_pol_axis(
 
     Args:
         ms (Path): The path to the measurement set that will be inspected
-        feed_idx (Optional[int], optional): Specify the entery in the FEED
+        feed_idx (Optional[int], optional): Specify the entry in the FEED
         table of `ms` to return. This might be required when a subset of a
         measurement set has been extracted from an observation with a varying
         orientation.
@@ -295,7 +302,7 @@ def convert_correlations(
     only the factor of 2 is required.
     """
     theta = pol_axis.to(u.rad).value
-    correction_matrix = np.matrix(
+    correction_matrix = np.array(
         [
             [
                 np.sin(2.0 * theta) + 1,
@@ -418,7 +425,7 @@ async def fix_ms_corrs_coro(
     data_column: str = "DATA",
     corrected_data_column: str = "CORRECTED_DATA",
     fix_stokes_factor: bool = True,
-) -> Awaitable[None]:
+) -> Awaitable:
     """Apply corrections to the ASKAP visibilities to bring them inline with
     what is expectede from other imagers, including CASA and WSClean. The
     original data in `data_column` are copied to `corrected_data_column` before
@@ -451,7 +458,7 @@ async def fix_ms_corrs_coro(
                 ms=ms,
                 app_params=_function_args,
             )
-            return
+            return None
         # Check if 'corrected_data_column' exists
         if corrected_data_column in cols:
             logger.critical(
@@ -465,10 +472,11 @@ async def fix_ms_corrs_coro(
                     ms=ms,
                     app_params=_function_args,
                 )
-            return
-
-        feed1 = np.unique(tab.getcol("FEED1"))
-        feed2 = np.unique(tab.getcol("FEED2"))
+            return None
+        all_feed1 = await asyncio.to_thread(tab.getcol, "FEED1")
+        all_feed2 = await asyncio.to_thread(tab.getcol, "FEED2")
+        feed1 = np.unique(all_feed1)
+        feed2 = np.unique(all_feed2)
 
         # For some ASKAP observations the orientation of the third-axis changes
         # throughout the observation. For example, bandpass observations vary
@@ -479,10 +487,10 @@ async def fix_ms_corrs_coro(
         ), "Found more than one feed orientation!"
         assert (
             feed1[0] == feed2[0]
-        ), f"The unique feed enteries available in the data table differ, {feed1=} {feed2=}"
+        ), f"The unique feed entries available in the data table differ, {feed1=} {feed2=}"
 
-        # The two assertions above should enfore enough constraint
-        # to make sure the rotation matix constructed is correct
+        # The two assertions above should enforce enough constraint
+        # to make sure the rotation matrix constructed is correct
         feed_idx = feed1[0]
 
     # Get the polarization axis
@@ -496,7 +504,7 @@ async def fix_ms_corrs_coro(
             ms=ms,
             app_params=_function_args,
         )
-        return
+        return None
 
     # Get the data chunk by chunk and convert the correlations
     # then write them back to the MS in the 'data_column' column
@@ -532,13 +540,14 @@ async def fix_ms_corrs_coro(
                     pol_axis,
                     fix_stokes_factor=fix_stokes_factor,
                 )
-                tab.putcol(
+                await asyncio.to_thread(
+                    tab.putcol,
                     corrected_data_column,
                     data_chunk_cor,
                     startrow=start_row,
                     nrow=len(data_chunk_cor),
                 )
-                tab.flush()
+                await asyncio.to_thread(tab.flush)
                 start_row += len(data_chunk_cor)
 
     logger.info(
