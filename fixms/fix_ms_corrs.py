@@ -26,6 +26,7 @@ from fixms.logger import TqdmToLogger, logger
 TQDM_OUT = TqdmToLogger(logger, level=logging.INFO)
 logger.setLevel(logging.INFO)
 
+
 # Stolen from https://stackoverflow.com/a/61478547
 async def gather_with_limit(limit: int, *coros: Awaitable):
     """Gather with a limit on the number of coroutines running at once.
@@ -42,7 +43,9 @@ async def gather_with_limit(limit: int, *coros: Awaitable):
     async def sem_coro(coro: Awaitable):
         async with semaphore:
             return await coro
+
     return await asyncio.gather(*(sem_coro(c) for c in coros))
+
 
 async def set_pol_axis_coro(
     ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None
@@ -599,16 +602,16 @@ async def fix_ms_corrs_coro(
         for chunk in range(nchunks):
             # task = asyncio.create_task(
             task = process_chunk(
-                    tab=tab,
-                    data_column=data_column,
-                    corrected_data_column=corrected_data_column,
-                    pol_axis=pol_axis,
-                    fix_stokes_factor=fix_stokes_factor,
-                    start_row=start_row,
-                    chunksize=chunksize,
-                    pbar=pbar,
-                    chunk_num=chunk,
-                )
+                tab=tab,
+                data_column=data_column,
+                corrected_data_column=corrected_data_column,
+                pol_axis=pol_axis,
+                fix_stokes_factor=fix_stokes_factor,
+                start_row=start_row,
+                chunksize=chunksize,
+                pbar=pbar,
+                chunk_num=chunk,
+            )
             # )
             start_row += chunksize
             tasks.append(task)
