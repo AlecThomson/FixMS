@@ -64,40 +64,49 @@ pip install FixMS
 
 ```
 ❯ fix_ms -h
-usage: fix_ms [-h] [--chunksize CHUNKSIZE] [--data-column DATA_COLUMN] [--corrected-data-column CORRECTED_DATA_COLUMN] [ms]
+usage: fix_ms [-h] [--chunksize CHUNKSIZE] [--max-chunks MAX_CHUNKS] [--data-column DATA_COLUMN] [--corrected-data-column CORRECTED_DATA_COLUMN] [--no-fix-stokes-factor] [ms]
 
 Utility to correct the ASKAP beam positions and apply a rotation to apply a change of the reference frame of the visibilities
 
 positional arguments:
   ms                    Measurement set to update (default: None)
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --chunksize CHUNKSIZE
                         The chunksize to use when reading the MS (default: 1000)
+  --max-chunks MAX_CHUNKS
+                        The maximum number of chunks to process at once (default: 1000)
   --data-column DATA_COLUMN
                         The column to fix (default: DATA)
   --corrected-data-column CORRECTED_DATA_COLUMN
                         The column to write the corrected data to (default: CORRECTED_DATA)
+  --no-fix-stokes-factor
+                        Don't fix the Stokes factor. Use this if you have *not* used ASKAPsoft. If you have used ASKAPsoft, you should leave this option alone. (default: False)
 ```
 
 ```
 ❯ fix_ms_corrs -h
-usage: fix_ms_corrs [-h] [--chunksize CHUNKSIZE] [--data-column DATA_COLUMN] [--corrected-data-column CORRECTED_DATA_COLUMN] ms
+usage: fix_ms_corrs [-h] [--chunksize CHUNKSIZE] [--max-chunks MAX_CHUNKS] [--data-column DATA_COLUMN] [--corrected-data-column CORRECTED_DATA_COLUMN] [--no-fix-stokes-factor] ms
 
-Fix the correlation rotation of ASKAP MSs. Converts the ASKAP standard correlations to the 'standard' correlations This will make them compatible with most imagers (e.g. wsclean, CASA) The new correlations are placed in a new column called 'CORRECTED_DATA'
+Fix the correlation rotation of ASKAP MSs. Converts the ASKAP standard correlations to the 'standard' correlations This will make them compatible with most imagers (e.g. wsclean, CASA) The
+new correlations are placed in a new column called 'CORRECTED_DATA'
 
 positional arguments:
   ms                    The MS to fix
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   --chunksize CHUNKSIZE
                         The chunksize to use when reading the MS (default: 1000)
+  --max-chunks MAX_CHUNKS
+                        The maximum number of chunks to process at once (default: 1000)
   --data-column DATA_COLUMN
                         The column to fix (default: DATA)
   --corrected-data-column CORRECTED_DATA_COLUMN
                         The column to write the corrected data to (default: CORRECTED_DATA)
+  --no-fix-stokes-factor
+                        Don't fix the Stokes factor. Use this if you have *not* used ASKAPsoft. If you have used ASKAPsoft, you should leave this option alone. (default: False)
 ```
 
 ```
