@@ -353,7 +353,7 @@ async def get_data_chunk_coro(
         Iterator[np.ndarray]: Chunk of datta to process
     """
     with table(ms.as_posix(), readonly=True, ack=False) as tab:
-        data = tab.__getattr__(data_column)
+        data = await asyncio.to_thread(tab.__getattr__, data_column)
         for i in range(0, len(data), chunksize):
             yield np.array(data[i : i + chunksize])
 
@@ -417,7 +417,6 @@ def check_data(ms: Path, data_column: str, corrected_data_column: str) -> bool:
         bool: If the data matches
     """
     return asyncio.run(check_data_coro(ms, data_column, corrected_data_column))
-
 
 async def fix_ms_corrs_coro(
     ms: Path,
@@ -548,7 +547,7 @@ async def fix_ms_corrs_coro(
                     nrow=len(data_chunk_cor),
                 )
                 await asyncio.to_thread(tab.flush)
-                start_row += len(data_chunk_cor)
+                start_row += len(data_chunk)
 
     logger.info(
         f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column.",
@@ -576,7 +575,7 @@ def fix_ms_corrs(
     data_column: str = "DATA",
     corrected_data_column: str = "CORRECTED_DATA",
     fix_stokes_factor: bool = True,
-) -> Awaitable[None]:
+) -> None:
     """Apply corrections to the ASKAP visibilities to bring them inline with
     what is expectede from other imagers, including CASA and WSClean. The
     original data in `data_column` are copied to `corrected_data_column` before
