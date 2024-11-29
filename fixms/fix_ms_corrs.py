@@ -418,6 +418,7 @@ def check_data(ms: Path, data_column: str, corrected_data_column: str) -> bool:
     """
     return asyncio.run(check_data_coro(ms, data_column, corrected_data_column))
 
+
 async def fix_ms_corrs_coro(
     ms: Path,
     chunksize: int = 10_000,
