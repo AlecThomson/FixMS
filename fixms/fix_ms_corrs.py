@@ -419,6 +419,39 @@ def check_data(ms: Path, data_column: str, corrected_data_column: str) -> bool:
     return asyncio.run(check_data_coro(ms, data_column, corrected_data_column))
 
 
+async def worker(
+    data_chunk: np.ndarray,
+    pol_axis: u.Quantity,
+    fix_stokes_factor: bool,
+    tab: table,
+    corrected_data_column: str,
+    start_row: int,
+):
+    """Work on a chunk of data and write it back to the MS
+
+    Args:
+        data_chunk (np.ndarray): Chunk of MS rows
+        pol_axis (u.Quantity): Rotation angle of the polarization axis
+        fix_stokes_factor (bool): Whether to fix the Stokes factor
+        tab (table): MS table object
+        corrected_data_column (str): Corrected data column
+        start_row (int): Starting row of the chunk
+    """
+    data_chunk_cor = convert_correlations(
+        data_chunk,
+        pol_axis,
+        fix_stokes_factor=fix_stokes_factor,
+    )
+    await asyncio.to_thread(
+        tab.putcol,
+        corrected_data_column,
+        data_chunk_cor,
+        startrow=start_row,
+        nrow=len(data_chunk_cor),
+    )
+    await asyncio.to_thread(tab.flush)
+
+
 async def fix_ms_corrs_coro(
     ms: Path,
     chunksize: int = 10_000,
@@ -532,23 +565,23 @@ async def fix_ms_corrs_coro(
         else:
             # Only perform this correction if the data column was
             # successfully renamed.
+            tasks = []
             async for data_chunk in tqdm(
                 data_chunks, total=nchunks, file=TQDM_OUT, desc="Rotating correlations"
             ):
-                data_chunk_cor = convert_correlations(
-                    data_chunk,
-                    pol_axis,
-                    fix_stokes_factor=fix_stokes_factor,
+                task = asyncio.create_task(
+                    worker(
+                        data_chunk,
+                        pol_axis,
+                        fix_stokes_factor,
+                        tab,
+                        corrected_data_column,
+                        start_row,
+                    )
                 )
-                await asyncio.to_thread(
-                    tab.putcol,
-                    corrected_data_column,
-                    data_chunk_cor,
-                    startrow=start_row,
-                    nrow=len(data_chunk_cor),
-                )
-                await asyncio.to_thread(tab.flush)
                 start_row += len(data_chunk)
+                tasks.append(task)
+            await tqdm.gather(*tasks)
 
     logger.info(
         f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column.",
