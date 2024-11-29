@@ -19,7 +19,7 @@ from typing import AsyncGenerator, Awaitable, Optional
 import astropy.units as u
 import numpy as np
 from casacore.tables import makecoldesc, table
-from tqdm.asyncio import tqdm
+from tqdm.auto import tqdm
 
 from fixms.logger import TqdmToLogger, logger
 
@@ -339,7 +339,7 @@ def convert_correlations(
     return rotated_correlations
 
 
-async def get_data_chunk_coro(
+async def get_data_chunk_generator(
     ms: Path, chunksize: int, data_column: str = "DATA"
 ) -> AsyncGenerator[np.ndarray, None]:
     """Generator function that will yield a chunk of data from the `ms` data table.
@@ -419,13 +419,15 @@ def check_data(ms: Path, data_column: str, corrected_data_column: str) -> bool:
     return asyncio.run(check_data_coro(ms, data_column, corrected_data_column))
 
 
-async def worker(
-    data_chunk: np.ndarray,
+def process_chunk(
+    tab: table,
+    data_column: str,
+    corrected_data_column: str,
     pol_axis: u.Quantity,
     fix_stokes_factor: bool,
-    tab: table,
-    corrected_data_column: str,
     start_row: int,
+    chunksize: int,
+    pbar: tqdm,
 ):
     """Work on a chunk of data and write it back to the MS
 
@@ -437,19 +439,21 @@ async def worker(
         corrected_data_column (str): Corrected data column
         start_row (int): Starting row of the chunk
     """
+    data = tab.__getattr__(data_column)
+    data_chunk = np.array(data[start_row : start_row + chunksize])
     data_chunk_cor = convert_correlations(
         data_chunk,
         pol_axis,
         fix_stokes_factor=fix_stokes_factor,
     )
-    await asyncio.to_thread(
-        tab.putcol,
+    tab.putcol(
         corrected_data_column,
         data_chunk_cor,
         startrow=start_row,
         nrow=len(data_chunk_cor),
     )
-    await asyncio.to_thread(tab.flush)
+    tab.flush()
+    pbar.update(1)
 
 
 async def fix_ms_corrs_coro(
@@ -541,7 +545,7 @@ async def fix_ms_corrs_coro(
 
     # Get the data chunk by chunk and convert the correlations
     # then write them back to the MS in the 'data_column' column
-    data_chunks = get_data_chunk_coro(ms, chunksize, data_column=data_column)
+    # data_chunks = get_data_chunk_generator(ms, chunksize, data_column=data_column)
     nchunks = await get_nchunks_coro(ms, chunksize, data_column=data_column)
     start_row = 0
     with table(ms.as_posix(), readonly=False, ack=False) as tab:
@@ -566,22 +570,26 @@ async def fix_ms_corrs_coro(
             # Only perform this correction if the data column was
             # successfully renamed.
             tasks = []
-            async for data_chunk in tqdm(
-                data_chunks, total=nchunks, file=TQDM_OUT, desc="Rotating correlations"
-            ):
+            pbar = tqdm(total=nchunks, file=TQDM_OUT, desc="Correcting data")
+            # async for data_chunk in tqdm(data_chunks, total=nchunks, file=TQDM_OUT):
+            for _ in range(nchunks):
                 task = asyncio.create_task(
-                    worker(
-                        data_chunk,
-                        pol_axis,
-                        fix_stokes_factor,
-                        tab,
-                        corrected_data_column,
-                        start_row,
+                    asyncio.to_thread(
+                        process_chunk,
+                        tab=tab,
+                        data_column=data_column,
+                        corrected_data_column=corrected_data_column,
+                        pol_axis=pol_axis,
+                        fix_stokes_factor=fix_stokes_factor,
+                        start_row=start_row,
+                        chunksize=chunksize,
+                        pbar=pbar,
                     )
                 )
-                start_row += len(data_chunk)
+                start_row += chunksize
                 tasks.append(task)
-            await tqdm.gather(*tasks)
+
+            await asyncio.gather(*tasks)
 
     logger.info(
         f"Finished correcting {data_column} of {str(ms)}. Written to {corrected_data_column} column.",
