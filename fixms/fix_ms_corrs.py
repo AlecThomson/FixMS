@@ -26,6 +26,23 @@ from fixms.logger import TqdmToLogger, logger
 TQDM_OUT = TqdmToLogger(logger, level=logging.INFO)
 logger.setLevel(logging.INFO)
 
+# Stolen from https://stackoverflow.com/a/61478547
+async def gather_with_limit(limit: int, *coros: Awaitable):
+    """Gather with a limit on the number of coroutines running at once.
+
+    Args:
+        limit (int): The number of coroutines to run at once
+        coros (Awaitable): The coroutines to run
+
+    Returns:
+        Awaitable: The result of the coroutines
+    """
+    semaphore = asyncio.Semaphore(limit)
+
+    async def sem_coro(coro: Awaitable):
+        async with semaphore:
+            return await coro
+    return await asyncio.gather(*(sem_coro(c) for c in coros))
 
 async def set_pol_axis_coro(
     ms: Path, pol_ang: u.Quantity, feed_idx: Optional[int] = None
@@ -440,16 +457,18 @@ async def process_chunk(
         corrected_data_column (str): Corrected data column
         start_row (int): Starting row of the chunk
     """
-    logger.info(f"Processing chunk {chunk_num}")
+    logger.debug(f"{chunk_num=} reading chunk...")
     data = await asyncio.to_thread(tab.__getattr__, data_column)
     data_chunk = await asyncio.to_thread(
         np.array, data[start_row : start_row + chunksize]
     )
+    logger.debug(f"{chunk_num=} converting chunk...")
     data_chunk_cor = convert_correlations(
         data_chunk,
         pol_axis,
         fix_stokes_factor=fix_stokes_factor,
     )
+    logger.debug(f"{chunk_num=} writing chunk...")
     await asyncio.to_thread(
         tab.putcol,
         corrected_data_column,
@@ -457,12 +476,14 @@ async def process_chunk(
         startrow=start_row,
         nrow=len(data_chunk_cor),
     )
+    logger.debug(f"{chunk_num=} done!")
     pbar.update(1)
 
 
 async def fix_ms_corrs_coro(
     ms: Path,
-    chunksize: int = 10_000,
+    chunksize: int = 1000,
+    max_chunks: int = 1000,
     data_column: str = "DATA",
     corrected_data_column: str = "CORRECTED_DATA",
     fix_stokes_factor: bool = True,
@@ -576,8 +597,8 @@ async def fix_ms_corrs_coro(
         pbar = tqdm(total=nchunks, file=TQDM_OUT, desc="Correcting data")
         # async for data_chunk in tqdm(data_chunks, total=nchunks, file=TQDM_OUT):
         for chunk in range(nchunks):
-            task = asyncio.create_task(
-                process_chunk(
+            # task = asyncio.create_task(
+            task = process_chunk(
                     tab=tab,
                     data_column=data_column,
                     corrected_data_column=corrected_data_column,
@@ -588,11 +609,11 @@ async def fix_ms_corrs_coro(
                     pbar=pbar,
                     chunk_num=chunk,
                 )
-            )
+            # )
             start_row += chunksize
             tasks.append(task)
 
-        await asyncio.gather(*tasks)
+        await gather_with_limit(max_chunks, *tasks)
         tab.flush()
 
     logger.info(
@@ -617,7 +638,8 @@ async def fix_ms_corrs_coro(
 
 def fix_ms_corrs(
     ms: Path,
-    chunksize: int = 10_000,
+    chunksize: int = 1000,
+    max_chunks: int = 1000,
     data_column: str = "DATA",
     corrected_data_column: str = "CORRECTED_DATA",
     fix_stokes_factor: bool = True,
@@ -642,6 +664,7 @@ def fix_ms_corrs(
         fix_ms_corrs_coro(
             ms=ms,
             chunksize=chunksize,
+            max_chunks=max_chunks,
             data_column=data_column,
             corrected_data_column=corrected_data_column,
             fix_stokes_factor=fix_stokes_factor,
@@ -664,6 +687,12 @@ def cli():
         help="The chunksize to use when reading the MS",
     )
     parser.add_argument(
+        "--max-chunks",
+        type=int,
+        default=1000,
+        help="The maximum number of chunks to process at once",
+    )
+    parser.add_argument(
         "--data-column", type=str, default="DATA", help="The column to fix"
     )
     parser.add_argument(
@@ -682,6 +711,7 @@ def cli():
     fix_ms_corrs(
         Path(args.ms),
         chunksize=args.chunksize,
+        max_chunks=args.max_chunks,
         data_column=args.data_column,
         corrected_data_column=args.corrected_data_column,
         fix_stokes_factor=not args.no_fix_stokes_factor,
