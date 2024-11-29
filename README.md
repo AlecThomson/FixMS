@@ -63,7 +63,7 @@ pip install FixMS
 ## Usage
 
 > **_NOTE:_** If running on large MeasurementSets pay attention to the
-> `chunksize` and `max-chunks` arguments. These are used to balance memory usage
+> 'chunksize' and 'max-chunks' arguments. These are used to balance memory usage
 > and the disk I/O. You may need to adjust these parameters to achieve maximum
 > speed on your hardware.
 
