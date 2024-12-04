@@ -4,6 +4,7 @@
 Utility to correct the ASKAP beam positions and apply a rotation
 to apply a change of the reference frame of the visibilities
 """
+
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from pathlib import Path
@@ -19,7 +20,6 @@ def get_parser() -> ArgumentParser:
     parser = ArgumentParser(
         description=__doc__, formatter_class=ArgumentDefaultsHelpFormatter
     )
-
     parser.add_argument(
         "ms", help="Measurement set to update", type=str, default=None, nargs="?"
     )
@@ -29,6 +29,12 @@ def get_parser() -> ArgumentParser:
         type=int,
         default=1000,
         help="The chunksize to use when reading the MS",
+    )
+    parser.add_argument(
+        "--max-chunks",
+        type=int,
+        default=1000,
+        help="The maximum number of chunks to process at once",
     )
     parser.add_argument(
         "--data-column", type=str, default="DATA", help="The column to fix"

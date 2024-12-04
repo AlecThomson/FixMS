@@ -1,9 +1,9 @@
-isort
-black
-sphinx
-numpydoc
-myst_parser
-autoapi
-sphinx-autoapi
-pydata-sphinx-theme
 -e .
+autoapi
+black
+isort
+myst_parser
+numpydoc
+pydata-sphinx-theme
+sphinx
+sphinx-autoapi

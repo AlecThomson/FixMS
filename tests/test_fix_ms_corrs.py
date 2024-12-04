@@ -3,14 +3,10 @@
 """
 Test the fixing the MS correlations
 """
-try:
-    # Python < 3.9
-    import importlib_resources as resources
-except ImportError:
-    import importlib.resources as resources
+
+import importlib.resources as resources
 import logging
 import shutil
-import unittest
 from pathlib import Path
 from typing import NamedTuple
 
@@ -52,7 +48,7 @@ def get_packaged_resource_path(package: str, filename: str) -> Path:
     """Load in the path of a package sources.
 
     The `package` argument is passed as a though the module
-    is being speficied as an import statement.
+    is being specified as an import statement.
 
     Args:
         package (str): The module path to the resources
@@ -68,7 +64,7 @@ def get_packaged_resource_path(package: str, filename: str) -> Path:
 
     logger.debug(f"Resolved {full_path=}")
 
-    return full_path
+    return Path(full_path)
 
 
 @pytest.fixture
@@ -99,7 +95,6 @@ def ms_rotated_example(tmpdir) -> ExampleData:
         data_column=data_column,
         corrected_data_column=corrected_data_column,
     )
-
     with table(original_ms_path.as_posix(), readonly=True) as tab:
         original_data = tab.getcol(data_column)
 
@@ -259,20 +254,22 @@ def askap_stokes_mat(ms):
     )
     logger.debug(f"{rot.shape=}")
     # I, Q, U, V = rot @ correlations
-    I, Q, U, V = np.einsum("ij,j...->i...", rot, correlations)
-    return Mueller(I, Q, U, V)
+    stokes_I, stokes_Q, stokes_U, stokes_V = np.einsum(
+        "ij,j...->i...", rot, correlations
+    )
+    return Mueller(stokes_I, stokes_Q, stokes_U, stokes_V)
 
 
 def askap_stokes(ms):
     theta = get_pol_axis(ms.original_ms_path)
     xx, xy, yx, yy = ms.original_data.T
     assert theta == -45 * u.deg, "Only works for theta = -45 deg, got {theta=}"
-    I = xx + yy
-    Q = yy - xx
-    U = -(xy + yx)
-    V = 1j * (yx - xy)
+    stokes_I = xx + yy
+    stokes_Q = yy - xx
+    stokes_U = -(xy + yx)
+    stokes_V = 1j * (yx - xy)
 
-    return Mueller(I, Q, U, V)
+    return Mueller(stokes_I, stokes_Q, stokes_U, stokes_V)
 
 
 def get_wsclean_stokes(ms):
@@ -282,12 +279,12 @@ def get_wsclean_stokes(ms):
     # *   YX = U - iV ;   U = (XY + YX)/2
     # *   YY = I - Q  ;   V = -i(XY - YX)/2
     xx, xy, yx, yy = ms.fixed_corrected_data.T
-    I = 0.5 * (xx + yy)
-    Q = 0.5 * (xx - yy)
-    U = 0.5 * (xy + yx)
-    V = -0.5j * (xy - yx)
+    stokes_I = 0.5 * (xx + yy)
+    stokes_Q = 0.5 * (xx - yy)
+    stokes_U = 0.5 * (xy + yx)
+    stokes_V = -0.5j * (xy - yx)
 
-    return Mueller(I, Q, U, V)
+    return Mueller(stokes_I, stokes_Q, stokes_U, stokes_V)
 
 
 def test_rotated_data_I(ms_standard_example):
