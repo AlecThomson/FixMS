@@ -1,9 +1,0 @@
--e .
-autoapi
-black
-isort
-myst_parser
-numpydoc
-pydata-sphinx-theme
-sphinx
-sphinx-autoapi
