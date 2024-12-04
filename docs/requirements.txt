@@ -1,1 +1,7 @@
 -e .[docs]
+autoapi
+myst_parser
+numpydoc
+pydata-sphinx-theme
+sphinx
+sphinx-autoapi
