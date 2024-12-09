@@ -234,9 +234,10 @@ def restore_ms_dir(ms):
 
     if tableexists("%s/FIELD_OLD" % (ms)):
         logger.info("Restoring FIELD directions in %s" % (ms), ms=ms)
-        with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
-            "%s/FIELD_OLD" % (ms), readonly=True, ack=False
-        ) as fp:
+        with (
+            table("%s/FIELD" % (ms), readonly=False, ack=False) as tp,
+            table("%s/FIELD_OLD" % (ms), readonly=True, ack=False) as fp,
+        ):
             field_dir = fp.getcol("PHASE_DIR")
             tp.putcol("PHASE_DIR", field_dir)
             tp.putcol("DELAY_DIR", field_dir)
@@ -251,9 +252,10 @@ def restore_ms_dir(ms):
 
     if tableexists("%s/FEED_OLD" % (ms)):
         logger.info("Restoring BEAM_OFFSET in %s" % (ms), ms=ms)
-        with table("%s/FEED" % (ms), readonly=False, ack=False) as tp, table(
-            "%s/FEED_OLD" % (ms), readonly=True, ack=False
-        ) as fp:
+        with (
+            table("%s/FEED" % (ms), readonly=False, ack=False) as tp,
+            table("%s/FEED_OLD" % (ms), readonly=True, ack=False) as fp,
+        ):
             offset = fp.getcol("BEAM_OFFSET")
             tp.putcol("BEAM_OFFSET", offset)
 
@@ -304,9 +306,10 @@ def fix_ms_dir(ms):
 
     # Open up the MS FIELD table so it can be updated.
     # Open up the MS FEED table so we can work out what the offset is for the beam.
-    with table("%s/FIELD" % (ms), readonly=False, ack=False) as tp, table(
-        "%s/FEED_OLD" % (ms), readonly=True, ack=False
-    ) as tf:
+    with (
+        table("%s/FIELD" % (ms), readonly=False, ack=False) as tp,
+        table("%s/FEED_OLD" % (ms), readonly=True, ack=False) as tf,
+    ):
         # The offsets are assumed to be the same for all antennas so get a list of all
         # the offsets for one antenna and for the current beam. This should return offsets
         # required for each field.
