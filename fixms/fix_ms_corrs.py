@@ -547,12 +547,12 @@ async def fix_ms_corrs_coro(
         # throughout the observation. For example, bandpass observations vary
         # this direction as each beam cycles in the footprint cycles over the
         # calibrator source.
-        assert (
-            len(feed1) == 1 and len(feed2) == 1
-        ), "Found more than one feed orientation!"
-        assert (
-            feed1[0] == feed2[0]
-        ), f"The unique feed entries available in the data table differ, {feed1=} {feed2=}"
+        assert len(feed1) == 1 and len(feed2) == 1, (
+            "Found more than one feed orientation!"
+        )
+        assert feed1[0] == feed2[0], (
+            f"The unique feed entries available in the data table differ, {feed1=} {feed2=}"
+        )
 
         # The two assertions above should enforce enough constraint
         # to make sure the rotation matrix constructed is correct

@@ -181,24 +181,24 @@ def test_get_pol_axis(ms_standard_example, ms_rotated_example):
         pol_axis_fixed = get_pol_axis(ms.fixed_ms_path, col="INSTRUMENT_RECEPTOR_ANGLE")
         rot_pol_axis_fixed = get_pol_axis(ms.fixed_ms_path, col="RECEPTOR_ANGLE")
 
-        assert np.isclose(
-            pol_axis_original, ms.pol_axis
-        ), f"Pol axis is incorrect {pol_axis_original=}"
-        assert np.isclose(
-            pol_axis_fixed, ms.pol_axis
-        ), f"Pol axis is incorrect {pol_axis_fixed=}"
-        assert np.isclose(
-            rot_pol_axis_fixed, 0 * u.deg
-        ), f"Pol axis is incorrect {rot_pol_axis_fixed=}"
+        assert np.isclose(pol_axis_original, ms.pol_axis), (
+            f"Pol axis is incorrect {pol_axis_original=}"
+        )
+        assert np.isclose(pol_axis_fixed, ms.pol_axis), (
+            f"Pol axis is incorrect {pol_axis_fixed=}"
+        )
+        assert np.isclose(rot_pol_axis_fixed, 0 * u.deg), (
+            f"Pol axis is incorrect {rot_pol_axis_fixed=}"
+        )
 
 
 def test_column_exists(ms_standard_example, ms_rotated_example):
     # Check that CORRECTED_DATA is on disk
     for ms in (ms_standard_example, ms_rotated_example):
         with table(ms.fixed_ms_path.as_posix()) as tab:
-            assert (
-                ms.corrected_data_column in tab.colnames()
-            ), f"{ms.corrected_data_column} not in MS"
+            assert ms.corrected_data_column in tab.colnames(), (
+                f"{ms.corrected_data_column} not in MS"
+            )
 
 
 def test_original_data(ms_standard_example, ms_rotated_example):
@@ -290,66 +290,66 @@ def get_wsclean_stokes(ms):
 def test_rotated_data_I(ms_standard_example):
     mueller_a = askap_stokes(ms_standard_example)
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_I, mueller_a_mat.stokes_I, atol=1e-4
-    ), "Stokes rotation I failed"
+    assert np.allclose(mueller_a.stokes_I, mueller_a_mat.stokes_I, atol=1e-4), (
+        "Stokes rotation I failed"
+    )
 
 
 def test_rotated_data_Q(ms_standard_example):
     mueller_a = askap_stokes(ms_standard_example)
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_Q, mueller_a_mat.stokes_Q, atol=1e-4
-    ), f"Stokes rotation Q failed for {ms_standard_example.fixed_ms_path.name}"
+    assert np.allclose(mueller_a.stokes_Q, mueller_a_mat.stokes_Q, atol=1e-4), (
+        f"Stokes rotation Q failed for {ms_standard_example.fixed_ms_path.name}"
+    )
 
 
 def test_rotated_data_U(ms_standard_example):
     mueller_a = askap_stokes(ms_standard_example)
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_U, mueller_a_mat.stokes_U, atol=1e-4
-    ), f"Stokes rotation U failed for {ms_standard_example.fixed_ms_path.name}"
+    assert np.allclose(mueller_a.stokes_U, mueller_a_mat.stokes_U, atol=1e-4), (
+        f"Stokes rotation U failed for {ms_standard_example.fixed_ms_path.name}"
+    )
 
 
 def test_rotated_data_V(ms_standard_example):
     mueller_a = askap_stokes(ms_standard_example)
     mueller_a_mat = askap_stokes_mat(ms_standard_example)
-    assert np.allclose(
-        mueller_a.stokes_V, mueller_a_mat.stokes_V, atol=1e-4
-    ), f"Stokes rotation V failed for {ms_standard_example.fixed_ms_path.name}"
+    assert np.allclose(mueller_a.stokes_V, mueller_a_mat.stokes_V, atol=1e-4), (
+        f"Stokes rotation V failed for {ms_standard_example.fixed_ms_path.name}"
+    )
 
 
 def test_stokes_I(ms_standard_example, ms_rotated_example):
     for ms in (ms_standard_example, ms_rotated_example):
         mueller_a = askap_stokes_mat(ms)
         mueller_w = get_wsclean_stokes(ms)
-        assert np.allclose(
-            mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4
-        ), f"ASKAP and WSClean disagree on Stokes I in {ms.fixed_ms_path.name}"
+        assert np.allclose(mueller_a.stokes_I, mueller_w.stokes_I, atol=1e-4), (
+            f"ASKAP and WSClean disagree on Stokes I in {ms.fixed_ms_path.name}"
+        )
 
 
 def test_stokes_Q(ms_standard_example, ms_rotated_example):
     for ms in (ms_standard_example, ms_rotated_example):
         mueller_a = askap_stokes_mat(ms)
         mueller_w = get_wsclean_stokes(ms)
-        assert np.allclose(
-            mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-1
-        ), f"ASKAP and WSClean disagree on Stokes Q in {ms.fixed_ms_path.name}"
+        assert np.allclose(mueller_a.stokes_Q, mueller_w.stokes_Q, atol=1e-1), (
+            f"ASKAP and WSClean disagree on Stokes Q in {ms.fixed_ms_path.name}"
+        )
 
 
 def test_stokes_U(ms_standard_example, ms_rotated_example):
     for ms in (ms_standard_example, ms_rotated_example):
         mueller_a = askap_stokes_mat(ms)
         mueller_w = get_wsclean_stokes(ms)
-        assert np.allclose(
-            mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4
-        ), f"ASKAP and WSClean disagree on Stokes U in {ms.fixed_ms_path.name}"
+        assert np.allclose(mueller_a.stokes_U, mueller_w.stokes_U, atol=1e-4), (
+            f"ASKAP and WSClean disagree on Stokes U in {ms.fixed_ms_path.name}"
+        )
 
 
 def test_stokes_V(ms_standard_example, ms_rotated_example):
     for ms in (ms_standard_example, ms_rotated_example):
         mueller_a = askap_stokes_mat(ms)
         mueller_w = get_wsclean_stokes(ms)
-        assert np.allclose(
-            mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4
-        ), f"ASKAP and WSClean disagree on Stokes V in {ms.fixed_ms_path.name}"
+        assert np.allclose(mueller_a.stokes_V, mueller_w.stokes_V, atol=1e-4), (
+            f"ASKAP and WSClean disagree on Stokes V in {ms.fixed_ms_path.name}"
+        )
