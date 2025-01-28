@@ -9,7 +9,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.9"
 numpy = ">=2"
-astropy = ">=5"
+astropy = ">=6"
 python-casacore = "*"
 tqdm = "*"
 importlib-resources = {version="*", python = "<3.9"}
