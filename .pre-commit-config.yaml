@@ -39,14 +39,14 @@ repos:
         args: [--prose-wrap=always]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.9.3"
+    rev: "v0.9.4"
     hooks:
       - id: ruff
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.0"
+    rev: "v2.4.1"
     hooks:
       - id: codespell
 
@@ -70,7 +70,7 @@ repos:
         additional_dependencies: ["validate-pyproject-schema-store[all]"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: "0.31.0"
+    rev: "0.31.1"
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
