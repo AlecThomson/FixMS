@@ -59,15 +59,20 @@ async def set_pol_axis_coro(
 
     # Backup the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE
     with table((ms / "FEED").as_posix(), readonly=False, ack=False) as tf:
-        coldesc = makecoldesc(
-            "INSTRUMENT_RECEPTOR_ANGLE", tf.getcoldesc("RECEPTOR_ANGLE")
+        colnames = tf.colnames()
+        # Only backup if the column does not exist
+        if "INSTRUMENT_RECEPTOR_ANGLE" not in colnames:
+            coldesc = makecoldesc(
+                "INSTRUMENT_RECEPTOR_ANGLE", tf.getcoldesc("RECEPTOR_ANGLE")
+            )
+            await asyncio.to_thread(tf.addcols, coldesc)
+            await asyncio.to_thread(
+                tf.putcol, "INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value
+            )
+            await asyncio.to_thread(tf.flush)
+        logger.info(
+            "Backed up the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE"
         )
-        await asyncio.to_thread(tf.addcols, coldesc)
-        await asyncio.to_thread(
-            tf.putcol, "INSTRUMENT_RECEPTOR_ANGLE", ms_feed.to(u.rad).value
-        )
-        await asyncio.to_thread(tf.flush)
-    logger.info("Backed up the original RECEPTOR_ANGLE to INSTRUMENT_RECEPTOR_ANGLE")
 
     if feed_idx is None:
         assert (ms_feed[:, 0] == ms_feed[0, 0]).all() & (
